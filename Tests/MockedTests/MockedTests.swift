@@ -1,12 +1,33 @@
 import XCTest
 @testable import Mocked
 
+protocol Protocol {
+
+    var foo: Any { get }
+
+    var bar: Any { get set }
+
+    func someFunction() -> Int
+
+}
+
+struct ProtocolMocked: Protocol, Mocked {
+    
+    var foo: Any = 1
+    var bar: Any = 2
+    let mock = Mock()
+    
+    func someFunction() -> Int {
+        return mocked(args: nil)
+    }
+    
+}
+
 final class MockedTests: XCTestCase {
     func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(Mocked().text, "Hello, World!")
+        let protocolMocked = ProtocolMocked()
+        protocolMocked.stub(callee: "someFunction()", returning: 42)
+        XCTAssertEqual(protocolMocked.someFunction(), 42)
     }
 
     static var allTests = [
