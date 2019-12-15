@@ -4,7 +4,6 @@ import XCTest
 protocol Protocol {
 
     var foo: Any { get }
-
     var bar: Any { get set }
 
     func someFunction() -> Int
