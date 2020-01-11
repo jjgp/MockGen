@@ -6,11 +6,11 @@ public protocol NicelyMocked: Mocked {
 
 public extension NicelyMocked {
     
-    func mocked<T>(callee stringValue: String = #function, args: Any?...) -> T! {
+    func mocked<T>(callee stringValue: String = #function, arguments: Any?...) throws -> T! {
         let callee = CalleeKeys(stringValue: stringValue)!
-        let call = Mock.Call(callee: callee, args: args)
+        let call = Mock<CalleeKeys>.Call(callee: callee, arguments: arguments)
         mock.calls.append(call)
-        return (mock.stubs[stringValue]?.do(call)
+        return (try mock.stubs[stringValue]?(call)
             ?? returnValue(for: callee)) as? T
     }
     
