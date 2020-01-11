@@ -1,11 +1,33 @@
+public protocol CalleeKey {
+    
+    var stringValue: String { get }
+    
+    init?(stringValue: String)
+
+}
+
+extension RawRepresentable where RawValue == String {
+    
+    init?(stringValue: String) {
+        self.init(rawValue: stringValue)
+    }
+    
+    var stringValue: String {
+        rawValue
+    }
+    
+}
+
 public protocol Mocked {
+    
+    associatedtype CalleeKeys: CalleeKey
     
     var mock: Mock { get }
     
     func mocked(callee: String, args: Any?...)
     func mocked<T>(callee: String, args: Any?...) -> T!
-    func stub(callee: String, returning returnedValue: Any?)
-    func stub(callee: String, handler: @escaping Mock.Stub.Handler)
+    func stub(callee: CalleeKeys, returning returnedValue: Any?)
+    func stub(callee: CalleeKeys, handler: @escaping Mock.Stub.Handler)
     
 }
 
@@ -21,19 +43,18 @@ public extension Mocked {
         return mock.stubs[callee]?.onCall(call) as? T
     }
     
-    
 }
 
 public extension Mocked {
-    
-    func stub(callee: String, returning returnedValue: Any?) {
+
+    func stub(callee: CalleeKeys, returning returnedValue: Any?) {
         stub(callee: callee) { _ in
             returnedValue
         }
     }
-    
-    func stub(callee: String, handler: @escaping Mock.Stub.Handler) {
-        mock.stubs[callee] = Mock.Stub(onCall: handler)
+
+    func stub(callee: CalleeKeys, handler: @escaping Mock.Stub.Handler) {
+        mock.stubs[callee.stringValue] = Mock.Stub(onCall: handler)
     }
-    
+
 }
