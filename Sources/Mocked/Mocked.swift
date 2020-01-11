@@ -2,25 +2,27 @@ public protocol Mocked {
     
     associatedtype CalleeKeys: CalleeKey
     
-    var mock: Mock { get }
+    var mock: Mock<CalleeKeys> { get }
     
-    func mocked(_ callee: String, args: Any?...)
-    func mocked<T>(_ callee: String, args: Any?...) -> T!
+    func mocked(callee stringValue: String, args: Any?...)
+    func mocked<T>(callee stringValue: String, args: Any?...) -> T!
     func stub(_ callee: CalleeKeys, returning returnedValue: Any?)
-    func stub(_ callee: CalleeKeys, handler: @escaping Mock.Stub.Handler)
+    func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub.Doing)
     
 }
 
 public extension Mocked {
     
-    func mocked(_ callee: String = #function, args: Any?...) {
+    func mocked(callee stringValue: String = #function, args: Any?...) {
+        let callee = CalleeKeys(stringValue: stringValue)!
         mock.calls.append(.init(callee: callee, args: args))
     }
     
-    func mocked<T>(_ callee: String = #function, args: Any?...) -> T! {
+    func mocked<T>(callee stringValue: String = #function, args: Any?...) -> T! {
+        let callee = CalleeKeys(stringValue: stringValue)!
         let call = Mock.Call(callee: callee, args: args)
         mock.calls.append(call)
-        return mock.stubs[callee]?.onCall(call) as? T
+        return mock.stubs[stringValue]?.do(call) as? T
     }
     
 }
@@ -33,8 +35,8 @@ public extension Mocked {
         }
     }
 
-    func stub(_ callee: CalleeKeys, handler: @escaping Mock.Stub.Handler) {
-        mock.stubs[callee.stringValue] = Mock.Stub(onCall: handler)
+    func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub.Doing) {
+        mock.stubs[callee.stringValue] = Mock.Stub(do: doing)
     }
 
 }

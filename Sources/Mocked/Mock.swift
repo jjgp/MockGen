@@ -1,11 +1,11 @@
-public class Mock {
+public class Mock<C: CalleeKey> {
     
     public struct Call {
         
-        public let callee: String
+        public let callee: C
         public let args: [Any?]
         
-        init(callee: String, args: [Any?]) {
+        init(callee: C, args: [Any?]) {
             self.callee = callee
             self.args = args
         }
@@ -14,9 +14,9 @@ public class Mock {
     
     public struct Stub {
         
-        let onCall: Handler
+        let `do`: Doing
         
-        public typealias Handler = (Mock.Call) -> Any?
+        public typealias Doing = (Mock.Call) -> Any?
         
     }
     
