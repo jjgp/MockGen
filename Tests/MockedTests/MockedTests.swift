@@ -71,7 +71,8 @@ struct AnError: Error {}
 
 extension ProtocolNicelyMocked {
     
-    func returnValue(for callee: CalleeKeys) -> Any! {
+    func returnValue(for call: MockCall) -> Any! {
+        let (callee, _) = call
         switch callee {
         case .someFunction:
             return 42

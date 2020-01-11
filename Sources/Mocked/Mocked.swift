@@ -22,17 +22,22 @@ public extension Mocked {
 public extension Mocked {
     
     func mocked(callee stringValue: String = #function, arguments: Any?...) throws {
-        let callee = CalleeKeys(stringValue: stringValue)!
-        let call = MockCall(callee: callee, arguments: arguments)
-        mock.calls.append(call)
-        _ = try mock.stubs[stringValue]?(call)
+        _ = try mock.stubs[stringValue]?(recorded(stringValue, arguments))
     }
     
     func mocked<T>(callee stringValue: String = #function, arguments: Any?...) throws -> T! {
+        return try mock.stubs[stringValue]?(recorded(stringValue, arguments)) as? T
+    }
+    
+}
+
+extension Mocked {
+    
+    func recorded(_ stringValue: String = #function, _ arguments: Any?...) -> MockCall {
         let callee = CalleeKeys(stringValue: stringValue)!
         let call = MockCall(callee: callee, arguments: arguments)
         mock.calls.append(call)
-        return try mock.stubs[stringValue]?(call) as? T
+        return call
     }
     
 }
