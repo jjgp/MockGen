@@ -32,4 +32,8 @@ public extension Mock.Arguments {
         }
     }
     
+    var count: Int {
+        arguments.count
+    }
+    
 }

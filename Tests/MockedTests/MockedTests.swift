@@ -45,6 +45,7 @@ final class MockedTests: XCTestCase {
         
         protocolMocked.verify(.someFunctionWithArg) { arguments in
             XCTAssertTrue(arguments?[0] == 42)
+            XCTAssertEqual(arguments?.count, 1)
         }
         
         XCTAssertTrue(protocolMocked.verify(missing: .someThrowingFunction))
