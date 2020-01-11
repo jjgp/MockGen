@@ -14,8 +14,9 @@ public class Mock {
     
     public struct Stub {
         
-        public typealias Handler = (Mock.Call) -> Any?
         let onCall: Handler
+        
+        public typealias Handler = (Mock.Call) -> Any?
         
     }
     

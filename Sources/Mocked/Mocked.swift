@@ -1,23 +1,3 @@
-public protocol CalleeKey {
-    
-    var stringValue: String { get }
-    
-    init?(stringValue: String)
-
-}
-
-extension RawRepresentable where RawValue == String {
-    
-    init?(stringValue: String) {
-        self.init(rawValue: stringValue)
-    }
-    
-    var stringValue: String {
-        rawValue
-    }
-    
-}
-
 public protocol Mocked {
     
     associatedtype CalleeKeys: CalleeKey
