@@ -1,11 +1,35 @@
 public class Mock<C: CalleeKey> {
     
-    var calls = [Call]()
-    var stubs = [String: Doing]()
+    public struct Arguments {
+        
+        let arguments: [Any?]
+        
+        init(_ arguments: [Any?]) {
+            self.arguments = arguments
+        }
+        
+    }
+    
+    public var calls = [Call]()
+    public var stubs = [String: Stub]()
     
     public init() {}
     
-    public typealias Call = (callee: C, arguments: [Any?])
-    public typealias Doing = (Call) throws -> Any?
+    public typealias Call = (callee: C, arguments: Arguments)
+    public typealias Stub = (Call) throws -> Any?
+    
+}
+
+public extension Mock.Arguments {
+    
+    subscript<T>(index: Int) -> T? {
+        get {
+            guard index < arguments.count else {
+                return nil
+            }
+            
+            return arguments[index] as? T
+        }
+    }
     
 }

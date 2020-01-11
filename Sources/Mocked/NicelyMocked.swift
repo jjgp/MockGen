@@ -1,6 +1,6 @@
 public protocol NicelyMocked: Mocked {
     
-    func returnValue(for call: MockCall) -> Any!
+    func returnValue(for call: Call) -> Any!
     
 }
 

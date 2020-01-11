@@ -1,4 +1,4 @@
-public protocol CalleeKey {
+public protocol CalleeKey: Hashable {
     
     var stringValue: String { get }
     
