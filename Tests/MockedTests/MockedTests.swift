@@ -7,6 +7,7 @@ protocol Protocol {
     var bar: Any { get set }
 
     func someFunction() -> Int
+    func someFunction(_ arg: Int) -> Int
 
 }
 
@@ -24,7 +25,7 @@ struct ProtocolMocked: Protocol, Mocked {
     let mock = Mock()
     
     func someFunction() -> Int {
-        return mocked(args: nil)
+        return mocked()
     }
     
     func someFunction(_ arg: Int) -> Int {
@@ -36,8 +37,8 @@ struct ProtocolMocked: Protocol, Mocked {
 final class MockedTests: XCTestCase {
     func testExample() {
         let protocolMocked = ProtocolMocked()
-        protocolMocked.stub(callee: .someFunction, returning: 42)
-        protocolMocked.stub(callee: .someFunctionWithArg, returning: 420)
+        protocolMocked.stub(.someFunction, returning: 42)
+        protocolMocked.stub(.someFunctionWithArg, returning: 420)
         XCTAssertEqual(protocolMocked.someFunction(), 42)
         XCTAssertEqual(protocolMocked.someFunction(420), 420)
     }
