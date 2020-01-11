@@ -1,39 +1,98 @@
 public protocol Mocked {
     
-    var mock: Mock { get }
+    associatedtype CalleeKeys: CalleeKey
     
-    func mocked(callee: String, args: Any?...)
-    func mocked<T>(callee: String, args: Any?...) -> T!
-    func stub(callee: String, returning returnedValue: Any?)
-    func stub(callee: String, handler: @escaping Mock.Stub.Handler)
+    var mock: Mock<CalleeKeys> { get }
+    
+    func mocked(callee stringValue: String, arguments: Any?...) throws
+    func mocked<T>(callee stringValue: String, arguments: Any?...) throws -> T!
+    func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub)
+    func stub(_ callee: CalleeKeys, returning value: Any?)
+    func stub(_ callee: CalleeKeys, throwing value: Error)
     
 }
 
 public extension Mocked {
     
-    func mocked(callee: String = #function, args: Any?...) {
-        mock.calls.append(.init(callee: callee, args: args))
+    typealias Arguments = Mock<CalleeKeys>.Arguments
+    typealias Call = Mock<CalleeKeys>.Call
+    typealias Stub = Mock<CalleeKeys>.Stub
+    
+}
+
+public extension Mocked {
+    
+    func mocked(callee stringValue: String = #function, arguments: Any?...) throws {
+        _ = try mock.stubs[stringValue]?(recorded(stringValue, arguments))
     }
     
-    func mocked<T>(callee: String = #function, args: Any?...) -> T! {
-        let call = Mock.Call(callee: callee, args: args)
+    func mocked<T>(callee stringValue: String = #function, arguments: Any?...) throws -> T! {
+        return try mock.stubs[stringValue]?(recorded(stringValue, arguments)) as? T
+    }
+    
+}
+
+extension Mocked {
+    
+    func recorded(_ stringValue: String = #function, _ arguments: [Any?]) -> Call {
+        let callee = CalleeKeys(stringValue: stringValue)!
+        let call = Call(callee: callee, arguments: .init(arguments))
         mock.calls.append(call)
-        return mock.stubs[callee]?.onCall(call) as? T
+        return call
     }
-    
     
 }
 
 public extension Mocked {
     
-    func stub(callee: String, returning returnedValue: Any?) {
-        stub(callee: callee) { _ in
-            returnedValue
-        }
+    func stub(_ callee: CalleeKeys, doing: @escaping Stub) {
+        mock.stubs[callee.stringValue] = doing
     }
     
-    func stub(callee: String, handler: @escaping Mock.Stub.Handler) {
-        mock.stubs[callee] = Mock.Stub(onCall: handler)
+    func stub(_ callee: CalleeKeys, returning value: Any?) {
+        stub(callee) { _ in value }
+    }
+    
+    func stub(_ callee: CalleeKeys, throwing value: Error) {
+        stub(callee) { _ in throw value }
+    }
+    
+}
+
+public extension Mocked {
+    
+    func verify(_ callee: CalleeKeys) -> Bool {
+        return mock.calls.first { callee == $0.callee } != nil
+    }
+    
+    func verify(_ callee: CalleeKeys, times: Int) -> Bool {
+        return times == mock.calls.filter({ callee == $0.callee }).count
+    }
+    
+    func verify(_ callee: CalleeKeys, passing: (Arguments?) -> Void) {
+        passing(mock.calls.last { callee == $0.callee }?.arguments)
+    }
+    
+    func verify(missing callee: CalleeKeys) -> Bool {
+        return mock.calls.filter({ callee == $0.callee }).count == 0
+    }
+    
+    func verify(numberOfCalls: Int) -> Bool {
+        return numberOfCalls == mock.calls.count
+    }
+    
+    func verify(order calls: [CalleeKeys]) -> Bool {
+        guard calls.count == mock.calls.count else {
+            return false
+        }
+        
+        for i in 0..<calls.count {
+            if calls[i] != mock.calls[i].callee {
+                return false
+            }
+        }
+        
+        return true
     }
     
 }
