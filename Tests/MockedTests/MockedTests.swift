@@ -22,7 +22,7 @@ final class MockedTests: XCTestCase {
     func testProtocolNicelyMockedVerify() {
         let protocolMocked = ProtocolNicelyMocked()
         _ = protocolMocked.someFunction()
-        _ = protocolMocked.someFunction(42)
+        _ = protocolMocked.someFunction(41)
         _ = protocolMocked.someFunction(42)
         _ = protocolMocked.someFunction()
         
@@ -45,6 +45,11 @@ final class MockedTests: XCTestCase {
         
         protocolMocked.verify(.someFunctionWithArg) { arguments in
             XCTAssertTrue(arguments?[0] == 42)
+            XCTAssertEqual(arguments?.count, 1)
+        }
+        
+        protocolMocked.verify(.someFunctionWithArg, timeAgo: 1) { arguments in
+            XCTAssertTrue(arguments?[0] == 41)
             XCTAssertEqual(arguments?.count, 1)
         }
         

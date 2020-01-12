@@ -69,8 +69,19 @@ public extension Mocked {
         return times == mock.calls.filter({ callee == $0.callee }).count
     }
     
-    func verify(_ callee: CalleeKeys, passing: (Arguments?) -> Void) {
-        passing(mock.calls.last { callee == $0.callee }?.arguments)
+    func verify(_ callee: CalleeKeys, timeAgo: Int = 0, passing: (Arguments?) -> Void) {
+        var timeAgo = timeAgo
+        for index in stride(from: mock.calls.count - 1, to: 0, by: -1) {
+            let call = mock.calls[index]
+            if callee == call.callee {
+                if timeAgo == 0 {
+                    passing(call.arguments)
+                    return
+                } else {
+                    timeAgo -= 1
+                }
+            }
+        }
     }
     
     func verify(missing callee: CalleeKeys) -> Bool {
