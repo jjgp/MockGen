@@ -1,7 +1,7 @@
 import XCTest
-@testable import Mocked
+@testable import SwiftMocked
 
-final class MockedTests: XCTestCase {
+final class SwiftMockedTests: XCTestCase {
     
     func testProtocolMockedStub() {
         let protocolMocked = ProtocolMocked()
@@ -140,7 +140,7 @@ extension ProtocolNicelyMocked {
     
 }
 
-extension MockedTests {
+extension SwiftMockedTests {
     
     static var allTests = [
         ("testProtocolMockedStub", testProtocolMockedStub),
