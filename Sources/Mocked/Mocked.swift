@@ -60,24 +60,44 @@ public extension Mocked {
 
 public extension Mocked {
     
-    func verify(_ callee: CalleeKeys) -> Bool {
-        return mock.calls.first { callee == $0.callee } != nil
+    func verify(_ callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
+        Assertions.make(
+            expression: mock.calls.first(where: { callee == $0.callee }) != nil,
+            message: "expected \(callee) to have been called",
+            file: file,
+            line: line
+        )
     }
     
-    func verify(_ callee: CalleeKeys, times: Int) -> Bool {
-        return times == mock.calls.filter({ callee == $0.callee }).count
+    func verify(_ callee: CalleeKeys, times: Int, file: StaticString = #file, line: UInt = #line) {
+        Assertions.make(
+            expression: mock.calls.filter({ callee == $0.callee }).count == times,
+            message: "expected \(callee) to have been called \(times) times",
+            file: file,
+            line: line
+        )
     }
     
     func verify(_ callee: CalleeKeys, passing: (Invocations?) -> Void) {
         passing(mock.calls.lazy.filter({ callee == $0.callee }).map({ $0.arguments }))
     }
     
-    func verify(missing callee: CalleeKeys) -> Bool {
-        return mock.calls.filter({ callee == $0.callee }).count == 0
+    func verify(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
+        Assertions.make(
+            expression: mock.calls.filter({ callee == $0.callee }).count == 0,
+            message: "expected \(callee) to have not been called",
+            file: file,
+            line: line
+        )
     }
     
-    func verify(numberOfCalls: Int) -> Bool {
-        return numberOfCalls == mock.calls.count
+    func verify(numberOfCalls: Int, file: StaticString = #file, line: UInt = #line) {
+        Assertions.make(
+            expression: numberOfCalls == mock.calls.count,
+            message: "expected \(numberOfCalls) total number of calls to mock",
+            file: file,
+            line: line
+        )
     }
     
     func verify(_ passing: ([Call]?) -> Void) {

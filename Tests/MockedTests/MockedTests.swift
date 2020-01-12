@@ -35,15 +35,12 @@ final class MockedTests: XCTestCase {
                 .someFunction
             ])
         }
-        
-        XCTAssertTrue(protocolMocked.verify(.someFunction))
-        XCTAssertTrue(protocolMocked.verify(.someFunctionWithArg))
-        XCTAssertFalse(protocolMocked.verify(.someThrowingFunction))
-        
-        XCTAssertTrue(protocolMocked.verify(.someFunction, times: 2))
-        XCTAssertTrue(protocolMocked.verify(.someFunctionWithArg, times: 2))
-        XCTAssertTrue(protocolMocked.verify(.someThrowingFunction, times: 0))
-        
+        protocolMocked.verify(.someFunction)
+        protocolMocked.verify(.someFunctionWithArg)
+        protocolMocked.verify(missing: .someThrowingFunction)
+        protocolMocked.verify(.someFunction, times: 2)
+        protocolMocked.verify(.someFunctionWithArg, times: 2)
+        protocolMocked.verify(.someThrowingFunction, times: 0)
         protocolMocked.verify(.someFunctionWithArg) { invocations in
             guard invocations?.count == 2 else {
                 XCTFail()
@@ -53,12 +50,7 @@ final class MockedTests: XCTestCase {
             XCTAssertEqual(invocations?[0].at(0), 41)
             XCTAssertEqual(invocations?[1].at(0), 42)
         }
-        
-        XCTAssertTrue(protocolMocked.verify(missing: .someThrowingFunction))
-        XCTAssertFalse(protocolMocked.verify(missing: .someFunction))
-        XCTAssertFalse(protocolMocked.verify(missing: .someFunctionWithArg))
-        
-        XCTAssertTrue(protocolMocked.verify(numberOfCalls: 4))
+        protocolMocked.verify(numberOfCalls: 4)
     }
     
 }
