@@ -14,7 +14,6 @@ public protocol Mocked {
 
 public extension Mocked {
     
-    typealias Arguments = Mock<CalleeKeys>.Arguments
     typealias Call = Mock<CalleeKeys>.Call
     typealias Stub = Mock<CalleeKeys>.Stub
     
@@ -69,19 +68,8 @@ public extension Mocked {
         return times == mock.calls.filter({ callee == $0.callee }).count
     }
     
-    func verify(_ callee: CalleeKeys, timeAgo: Int = 0, passing: (Arguments?) -> Void) {
-        var timeAgo = timeAgo
-        for index in stride(from: mock.calls.count - 1, to: 0, by: -1) {
-            let call = mock.calls[index]
-            if callee == call.callee {
-                if timeAgo == 0 {
-                    passing(call.arguments)
-                    return
-                } else {
-                    timeAgo -= 1
-                }
-            }
-        }
+    func verify(_ callee: CalleeKeys, passing: (Invocations?) -> Void) {
+        passing(mock.calls.lazy.filter({ callee == $0.callee }).map({ $0.arguments }))
     }
     
     func verify(missing callee: CalleeKeys) -> Bool {
@@ -92,18 +80,10 @@ public extension Mocked {
         return numberOfCalls == mock.calls.count
     }
     
-    func verify(order calls: [CalleeKeys]) -> Bool {
-        guard calls.count == mock.calls.count else {
-            return false
-        }
-        
-        for i in 0..<calls.count {
-            if calls[i] != mock.calls[i].callee {
-                return false
-            }
-        }
-        
-        return true
+    func verify(_ passing: ([Call]?) -> Void) {
+        passing(mock.calls)
     }
+    
+    typealias Invocations = [Arguments]
     
 }

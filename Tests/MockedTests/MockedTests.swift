@@ -26,14 +26,15 @@ final class MockedTests: XCTestCase {
         _ = protocolMocked.someFunction(42)
         _ = protocolMocked.someFunction()
         
-        XCTAssertTrue(
-            protocolMocked.verify(order: [
+        protocolMocked.verify { calls in
+            let callees = calls?.map { $0.callee }
+            XCTAssertEqual(callees, [
                 .someFunction,
                 .someFunctionWithArg,
                 .someFunctionWithArg,
                 .someFunction
             ])
-        )
+        }
         
         XCTAssertTrue(protocolMocked.verify(.someFunction))
         XCTAssertTrue(protocolMocked.verify(.someFunctionWithArg))
@@ -43,14 +44,14 @@ final class MockedTests: XCTestCase {
         XCTAssertTrue(protocolMocked.verify(.someFunctionWithArg, times: 2))
         XCTAssertTrue(protocolMocked.verify(.someThrowingFunction, times: 0))
         
-        protocolMocked.verify(.someFunctionWithArg) { arguments in
-            XCTAssertTrue(arguments?[0] == 42)
-            XCTAssertEqual(arguments?.count, 1)
-        }
-        
-        protocolMocked.verify(.someFunctionWithArg, timeAgo: 1) { arguments in
-            XCTAssertTrue(arguments?[0] == 41)
-            XCTAssertEqual(arguments?.count, 1)
+        protocolMocked.verify(.someFunctionWithArg) { invocations in
+            guard invocations?.count == 2 else {
+                XCTFail()
+                return
+            }
+            
+            XCTAssertEqual(invocations?[0].at(0), 41)
+            XCTAssertEqual(invocations?[1].at(0), 42)
         }
         
         XCTAssertTrue(protocolMocked.verify(missing: .someThrowingFunction))
