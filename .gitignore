@@ -2,4 +2,5 @@
 .build
 .swiftpm
 Packages
-*.xcodeproj
+Mocked.xcodeproj
+xcuserdata/

@@ -1,17 +1,7 @@
 public class Mock<C: CalleeKey> {
     
-    public struct Arguments {
-        
-        let arguments: [Any?]
-        
-        init(_ arguments: [Any?]) {
-            self.arguments = arguments
-        }
-        
-    }
-    
-    public var calls = [Call]()
-    public var stubs = [String: Stub]()
+    var calls = [Call]()
+    var stubs = [String: Stub]()
     
     public init() {}
     
@@ -20,16 +10,28 @@ public class Mock<C: CalleeKey> {
     
 }
 
-public extension Mock.Arguments {
+public struct Arguments {
     
-    subscript<T>(index: Int) -> T? {
-        get {
-            guard index < arguments.count else {
-                return nil
-            }
-            
-            return arguments[index] as? T
+    let arguments: [Any?]
+    
+    init(_ arguments: [Any?]) {
+        self.arguments = arguments
+    }
+    
+}
+
+public extension Arguments {
+
+    func at<T>(_ position: Int) -> T? {
+        guard position < arguments.count else {
+            return nil
         }
+        
+        return arguments[position] as? T
+    }
+    
+    var count: Int {
+        arguments.count
     }
     
 }
