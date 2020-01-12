@@ -1,12 +1,6 @@
-public protocol CalleeKey: Hashable {
-    
-    var stringValue: String { get }
-    
-    init?(stringValue: String)
+public protocol CalleeKey: Hashable, RawRepresentable where RawValue == String {}
 
-}
-
-extension RawRepresentable where RawValue == String {
+extension CalleeKey {
     
     var stringValue: String {
         rawValue

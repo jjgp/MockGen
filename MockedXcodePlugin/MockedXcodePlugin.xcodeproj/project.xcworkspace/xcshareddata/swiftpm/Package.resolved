@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Mocked",
+        "repositoryURL": "git@github.com:jjgp/SwiftMocked.git",
+        "state": {
+          "branch": "master",
+          "revision": "0cd002553caef588e75a7b9ea4f6da90c7ba67b3",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
