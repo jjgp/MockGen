@@ -6,6 +6,7 @@
 //  Copyright © 2020 Mocked. All rights reserved.
 //
 
+import Mocked
 import XCTest
 @testable import MockedXcodePlugin
 

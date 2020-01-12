@@ -3,4 +3,5 @@
 .swiftpm
 Packages
 Mocked.xcodeproj
+swiftpm/
 xcuserdata/

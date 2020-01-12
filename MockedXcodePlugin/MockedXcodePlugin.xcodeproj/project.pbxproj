@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,6 +17,7 @@
 		B726D3F623CB684E0054831A /* SourceEditorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B726D3F523CB684E0054831A /* SourceEditorExtension.swift */; };
 		B726D3F823CB684E0054831A /* SourceEditorCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B726D3F723CB684E0054831A /* SourceEditorCommand.swift */; };
 		B726D3FD23CB684E0054831A /* MockedSourceEditor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B726D3F023CB684E0054831A /* MockedSourceEditor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B726D40423CB72180054831A /* Mocked in Frameworks */ = {isa = PBXBuildFile; productRef = B726D40323CB72180054831A /* Mocked */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +83,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B726D40423CB72180054831A /* Mocked in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +205,9 @@
 				B726D3DF23CB68280054831A /* PBXTargetDependency */,
 			);
 			name = MockedXcodePluginTests;
+			packageProductDependencies = (
+				B726D40323CB72180054831A /* Mocked */,
+			);
 			productName = MockedXcodePluginTests;
 			productReference = B726D3DD23CB68280054831A /* MockedXcodePluginTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -255,6 +260,9 @@
 				Base,
 			);
 			mainGroup = B726D3BF23CB68260054831A;
+			packageReferences = (
+				B726D40223CB72180054831A /* XCRemoteSwiftPackageReference "SwiftMocked" */,
+			);
 			productRefGroup = B726D3C923CB68270054831A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -634,6 +642,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B726D40223CB72180054831A /* XCRemoteSwiftPackageReference "SwiftMocked" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:jjgp/SwiftMocked.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B726D40323CB72180054831A /* Mocked */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B726D40223CB72180054831A /* XCRemoteSwiftPackageReference "SwiftMocked" */;
+			productName = Mocked;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B726D3C023CB68260054831A /* Project object */;
 }
