@@ -22,11 +22,13 @@ public extension Mocked {
 public extension Mocked {
     
     func mocked(callee stringValue: String = #function, arguments: Any?...) throws {
-        _ = try mock.stubs[stringValue]?(recorded(stringValue, arguments))
+        let call = recorded(stringValue, arguments)
+        _ = try mock.stubs[stringValue]?(call)
     }
     
     func mocked<T>(callee stringValue: String = #function, arguments: Any?...) throws -> T! {
-        return try mock.stubs[stringValue]?(recorded(stringValue, arguments)) as? T
+        let call = recorded(stringValue, arguments)
+        return try mock.stubs[stringValue]?(call) as? T
     }
     
 }
