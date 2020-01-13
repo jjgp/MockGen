@@ -74,7 +74,7 @@ struct ProtocolMocked: Protocol, Mocked {
         }
     }
     let mock = Mock<CalleeKeys>()
-    let returnValue: ((Call) -> Any?)? = Self.returnedValue
+    let defaultStub = Self.defaultReturnValues
     
     func someFunction() -> Int {
         return try! mocked()
@@ -96,7 +96,7 @@ struct ProtocolMocked: Protocol, Mocked {
 
 extension ProtocolMocked {
     
-    static var returnedValue: ((Call) -> Any?)? {
+    static var defaultReturnValues: Stub? {
         return { call in
             let (callee, _) = call
             switch callee {
