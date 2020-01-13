@@ -40,7 +40,7 @@ extension Mocked {
     func recorded(_ stringValue: String = #function, _ arguments: [Any?]) -> Call {
         let callee = CalleeKeys(stringValue: stringValue)!
         let call = Call(callee: callee, arguments: .init(arguments))
-        mock.calls.append(call)
+        mock.calls.insert(call, at: 0)
         return call
     }
     
@@ -60,54 +60,8 @@ public extension Mocked {
         stub(callee) { _ in throw value }
     }
     
-}
-
-public extension Mocked {
-    
-    func verify(_ callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
-        Assertions.make(
-            expression: mock.calls.first(where: { callee == $0.callee }) != nil,
-            message: "expected \(callee) to have been called",
-            file: file,
-            line: line
-        )
+    func removeStubs() {
+        mock.stubs.removeAll()
     }
-    
-    func verify(_ callee: CalleeKeys, times: Int, file: StaticString = #file, line: UInt = #line) {
-        Assertions.make(
-            expression: mock.calls.filter({ callee == $0.callee }).count == times,
-            message: "expected \(callee) to have been called \(times) times",
-            file: file,
-            line: line
-        )
-    }
-    
-    func verify(_ callee: CalleeKeys, passing: (Invocations?) -> Void) {
-        passing(mock.calls.lazy.filter({ callee == $0.callee }).map({ $0.arguments }))
-    }
-    
-    func verify(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
-        Assertions.make(
-            expression: mock.calls.filter({ callee == $0.callee }).count == 0,
-            message: "expected \(callee) to have not been called",
-            file: file,
-            line: line
-        )
-    }
-    
-    func verify(numberOfCalls: Int, file: StaticString = #file, line: UInt = #line) {
-        Assertions.make(
-            expression: numberOfCalls == mock.calls.count,
-            message: "expected \(numberOfCalls) total number of calls to mock",
-            file: file,
-            line: line
-        )
-    }
-    
-    func verify(_ passing: ([Call]?) -> Void) {
-        passing(mock.calls)
-    }
-    
-    typealias Invocations = [Arguments]
     
 }

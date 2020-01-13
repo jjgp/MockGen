@@ -11,44 +11,6 @@ final class SwiftMockedTests: XCTestCase {
         XCTAssertEqual(protocolMocked.someFunction(420), 420)
     }
     
-    func testProtocolMockedVerify() {
-        let protocolMocked = ProtocolMocked()
-        _ = protocolMocked.someFunction()
-        _ = protocolMocked.someFunction(41)
-        _ = protocolMocked.someFunction(42)
-        _ = protocolMocked.someFunction()
-        protocolMocked.someOtherFunction()
-        
-        protocolMocked.verify { calls in
-            let callees = calls?.map { $0.callee }
-            XCTAssertEqual(callees, [
-                .someFunction,
-                .someFunctionWithArg,
-                .someFunctionWithArg,
-                .someFunction,
-                .someOtherFunction
-            ])
-        }
-        protocolMocked.verify(.someFunction)
-        protocolMocked.verify(.someFunctionWithArg)
-        protocolMocked.verify(.someOtherFunction)
-        protocolMocked.verify(missing: .someThrowingFunction)
-        protocolMocked.verify(.someFunction, times: 2)
-        protocolMocked.verify(.someFunctionWithArg, times: 2)
-        protocolMocked.verify(.someOtherFunction, times: 1)
-        protocolMocked.verify(.someThrowingFunction, times: 0)
-        protocolMocked.verify(.someFunctionWithArg) { invocations in
-            guard invocations?.count == 2 else {
-                XCTFail()
-                return
-            }
-            
-            XCTAssertEqual(invocations?[0].at(0), 41)
-            XCTAssertEqual(invocations?[1].at(0), 42)
-        }
-        protocolMocked.verify(numberOfCalls: 5)
-    }
-    
     func testVerifyProtocolMocked() {
         let protocolMocked = ProtocolMocked()
         _ = protocolMocked.someFunction()
@@ -58,7 +20,18 @@ final class SwiftMockedTests: XCTestCase {
         protocolMocked.someOtherFunction()
         
         let verify = Verify(protocolMocked)
-        verify.calls(to: .someFunction)
+        let calls = verify.calls()
+        calls.total(5)
+        calls.total(lessThan: 6)
+        calls.total(greaterThan: 4)
+        var invocations = verify.calls(to: .someFunction)
+        invocations.total(2)
+        invocations.total(lessThan: 3)
+        invocations.total(greaterThan: 1)
+        invocations = verify.calls(to: .someFunctionWithArg)
+        XCTAssertEqual(invocations.inspect()?.argument(0), 42)
+        XCTAssertEqual(invocations.inspect(ago: 1)?.argument(0), 41)
+        verify.calls(missing: .someThrowingFunction)
     }
     
 }
@@ -149,7 +122,7 @@ extension SwiftMockedTests {
     
     static var allTests = [
         ("testProtocolMockedReturnValue", testProtocolMockedReturnValue),
-        ("testProtocolMockedVerify", testProtocolMockedVerify)
+        ("testVerifyProtocolMocked", testVerifyProtocolMocked)
     ]
     
 }
