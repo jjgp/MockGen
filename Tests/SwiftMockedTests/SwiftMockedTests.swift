@@ -5,16 +5,23 @@ final class SwiftMockedTests: XCTestCase {
     
     func testProtocolMockedStub() {
         let protocolMocked = ProtocolMocked()
+        protocolMocked.stub(.foo, returning: 4.2)
+        protocolMocked.stub(.bar, returning: 4200)
         protocolMocked.stub(.someFunction, returning: 42)
-        XCTAssertEqual(protocolMocked.someFunction(), 42)
+        protocolMocked.stub(.someFunction, returning: 42)
         protocolMocked.stub(.someFunctionWithArg, returning: 420)
-        XCTAssertEqual(protocolMocked.someFunction(420), 420)
         protocolMocked.stub(.someThrowingFunction, throwing: AnError())
+        XCTAssertEqual(protocolMocked.foo as? Double, 4.2)
+        XCTAssertEqual(protocolMocked.bar as? Int, 4200)
+        XCTAssertEqual(protocolMocked.someFunction(), 42)
+        XCTAssertEqual(protocolMocked.someFunction(420), 420)
         XCTAssertThrowsError(try protocolMocked.someThrowingFunction())
     }
     
     func testProtocolNicelyMockedReturnValue() {
         let protocolMocked = ProtocolNicelyMocked()
+        XCTAssertEqual(protocolMocked.foo as? Double, 4.2)
+        XCTAssertEqual(protocolMocked.bar as? Int, 4200)
         XCTAssertEqual(protocolMocked.someFunction(), 42)
         XCTAssertEqual(protocolMocked.someFunction(420), 420)
     }
@@ -74,14 +81,28 @@ struct ProtocolMocked: Protocol, Mocked {
     
     enum CalleeKeys: String, CalleeKey {
         
+        case foo = "foo"
+        case bar = "bar"
         case someFunction = "someFunction()"
         case someFunctionWithArg = "someFunction(_:)"
+        case someOtherFunction = "someOtherFunction()"
         case someThrowingFunction = "someThrowingFunction()"
         
     }
     
-    var foo: Any = 1
-    var bar: Any = 2
+    var foo: Any {
+        get {
+            try! mocked() as Any
+        }
+    }
+    var bar: Any {
+        get {
+            try! mocked() as Any
+        }
+        set {
+            _ = try! mocked()
+        }
+    }
     let mock = Mock<CalleeKeys>()
     
     func someFunction() -> Int {
@@ -93,7 +114,7 @@ struct ProtocolMocked: Protocol, Mocked {
     }
     
     func someThrowingFunction() throws {
-        try mocked()
+        _ = try mocked()
     }
     
 }
@@ -102,6 +123,8 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
     
     enum CalleeKeys: String, CalleeKey {
         
+        case foo = "foo"
+        case bar = "bar"
         case someFunction = "someFunction()"
         case someFunctionWithArg = "someFunction(_:)"
         case someOtherFunction = "someOtherFunction()"
@@ -109,8 +132,19 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
         
     }
     
-    var foo: Any = 1
-    var bar: Any = 2
+    var foo: Any {
+        get {
+            try! mocked() as Any
+        }
+    }
+    var bar: Any {
+        get {
+            try! mocked() as Any
+        }
+        set {
+            _ = try! mocked()
+        }
+    }
     let mock = Mock<CalleeKeys>()
     
     func someFunction() -> Int {
@@ -122,11 +156,11 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
     }
     
     func someOtherFunction() {
-        try? mocked()
+        _ = try! mocked()
     }
     
     func someThrowingFunction() throws {
-        try mocked()
+        _ = try mocked()
     }
     
 }
@@ -138,6 +172,10 @@ extension ProtocolNicelyMocked {
     func returnValue(for call: Call) -> Any! {
         let (callee, _) = call
         switch callee {
+        case .foo:
+            return 4.2
+        case .bar:
+            return 4200
         case .someFunction:
             return 42
         case .someFunctionWithArg:
