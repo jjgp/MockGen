@@ -3,31 +3,16 @@ import XCTest
 
 final class SwiftMockedTests: XCTestCase {
     
-    func testProtocolMockedStub() {
+    func testProtocolMockedReturnValue() {
         let protocolMocked = ProtocolMocked()
-        protocolMocked.stub(.foo, returning: 4.2)
-        protocolMocked.stub(.bar, returning: 4200)
-        protocolMocked.stub(.someFunction, returning: 42)
-        protocolMocked.stub(.someFunction, returning: 42)
-        protocolMocked.stub(.someFunctionWithArg, returning: 420)
-        protocolMocked.stub(.someThrowingFunction, throwing: AnError())
-        XCTAssertEqual(protocolMocked.foo as? Double, 4.2)
-        XCTAssertEqual(protocolMocked.bar as? Int, 4200)
-        XCTAssertEqual(protocolMocked.someFunction(), 42)
-        XCTAssertEqual(protocolMocked.someFunction(420), 420)
-        XCTAssertThrowsError(try protocolMocked.someThrowingFunction())
-    }
-    
-    func testProtocolNicelyMockedReturnValue() {
-        let protocolMocked = ProtocolNicelyMocked()
         XCTAssertEqual(protocolMocked.foo as? Double, 4.2)
         XCTAssertEqual(protocolMocked.bar as? Int, 4200)
         XCTAssertEqual(protocolMocked.someFunction(), 42)
         XCTAssertEqual(protocolMocked.someFunction(420), 420)
     }
     
-    func testProtocolNicelyMockedVerify() {
-        let protocolMocked = ProtocolNicelyMocked()
+    func testProtocolMockedVerify() {
+        let protocolMocked = ProtocolMocked()
         _ = protocolMocked.someFunction()
         _ = protocolMocked.someFunction(41)
         _ = protocolMocked.someFunction(42)
@@ -62,6 +47,18 @@ final class SwiftMockedTests: XCTestCase {
             XCTAssertEqual(invocations?[1].at(0), 42)
         }
         protocolMocked.verify(numberOfCalls: 5)
+    }
+    
+    func testVerifyProtocolMocked() {
+        let protocolMocked = ProtocolMocked()
+        _ = protocolMocked.someFunction()
+        _ = protocolMocked.someFunction(41)
+        _ = protocolMocked.someFunction(42)
+        _ = protocolMocked.someFunction()
+        protocolMocked.someOtherFunction()
+        
+        let verify = Verify(protocolMocked)
+        verify.calls(to: .someFunction)
     }
     
 }
@@ -100,52 +97,11 @@ struct ProtocolMocked: Protocol, Mocked {
             try! mocked() as Any
         }
         set {
-            _ = try! mocked()
+            try! mocked()
         }
     }
     let mock = Mock<CalleeKeys>()
-    
-    func someFunction() -> Int {
-        return try! mocked()
-    }
-    
-    func someFunction(_ arg: Int) -> Int {
-        return try! mocked(arguments: arg)
-    }
-    
-    func someThrowingFunction() throws {
-        _ = try mocked()
-    }
-    
-}
-
-struct ProtocolNicelyMocked: Protocol, NicelyMocked {
-    
-    enum CalleeKeys: String, CalleeKey {
-        
-        case foo = "foo"
-        case bar = "bar"
-        case someFunction = "someFunction()"
-        case someFunctionWithArg = "someFunction(_:)"
-        case someOtherFunction = "someOtherFunction()"
-        case someThrowingFunction = "someThrowingFunction()"
-        
-    }
-    
-    var foo: Any {
-        get {
-            try! mocked() as Any
-        }
-    }
-    var bar: Any {
-        get {
-            try! mocked() as Any
-        }
-        set {
-            _ = try! mocked()
-        }
-    }
-    let mock = Mock<CalleeKeys>()
+    let returnValue: ((Call) -> Any?)? = Self.returnedValue
     
     func someFunction() -> Int {
         return try! mocked()
@@ -156,43 +112,44 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
     }
     
     func someOtherFunction() {
-        _ = try! mocked()
+        try! mocked()
     }
     
     func someThrowingFunction() throws {
-        _ = try mocked()
+        try mocked()
+    }
+    
+}
+
+extension ProtocolMocked {
+    
+    static var returnedValue: ((Call) -> Any?)? {
+        return { call in
+            let (callee, _) = call
+            switch callee {
+            case .foo:
+                return 4.2
+            case .bar:
+                return 4200
+            case .someFunction:
+                return 42
+            case .someFunctionWithArg:
+                return 420
+            default:
+                return nil
+            }
+        }
     }
     
 }
 
 struct AnError: Error {}
 
-extension ProtocolNicelyMocked {
-    
-    func returnValue(for call: Call) -> Any! {
-        let (callee, _) = call
-        switch callee {
-        case .foo:
-            return 4.2
-        case .bar:
-            return 4200
-        case .someFunction:
-            return 42
-        case .someFunctionWithArg:
-            return 420
-        default:
-            return nil
-        }
-    }
-    
-}
-
 extension SwiftMockedTests {
     
     static var allTests = [
-        ("testProtocolMockedStub", testProtocolMockedStub),
-        ("testProtocolNicelyMockedReturnValue", testProtocolNicelyMockedReturnValue),
-        ("testProtocolNicelyMockedVerify", testProtocolNicelyMockedVerify),
+        ("testProtocolMockedReturnValue", testProtocolMockedReturnValue),
+        ("testProtocolMockedVerify", testProtocolMockedVerify)
     ]
     
 }
