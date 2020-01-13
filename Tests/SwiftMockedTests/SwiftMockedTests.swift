@@ -25,6 +25,7 @@ final class SwiftMockedTests: XCTestCase {
         _ = protocolMocked.someFunction(41)
         _ = protocolMocked.someFunction(42)
         _ = protocolMocked.someFunction()
+        protocolMocked.someOtherFunction()
         
         protocolMocked.verify { calls in
             let callees = calls?.map { $0.callee }
@@ -32,14 +33,17 @@ final class SwiftMockedTests: XCTestCase {
                 .someFunction,
                 .someFunctionWithArg,
                 .someFunctionWithArg,
-                .someFunction
+                .someFunction,
+                .someOtherFunction
             ])
         }
         protocolMocked.verify(.someFunction)
         protocolMocked.verify(.someFunctionWithArg)
+        protocolMocked.verify(.someOtherFunction)
         protocolMocked.verify(missing: .someThrowingFunction)
         protocolMocked.verify(.someFunction, times: 2)
         protocolMocked.verify(.someFunctionWithArg, times: 2)
+        protocolMocked.verify(.someOtherFunction, times: 1)
         protocolMocked.verify(.someThrowingFunction, times: 0)
         protocolMocked.verify(.someFunctionWithArg) { invocations in
             guard invocations?.count == 2 else {
@@ -50,7 +54,7 @@ final class SwiftMockedTests: XCTestCase {
             XCTAssertEqual(invocations?[0].at(0), 41)
             XCTAssertEqual(invocations?[1].at(0), 42)
         }
-        protocolMocked.verify(numberOfCalls: 4)
+        protocolMocked.verify(numberOfCalls: 5)
     }
     
 }
@@ -100,6 +104,7 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
         
         case someFunction = "someFunction()"
         case someFunctionWithArg = "someFunction(_:)"
+        case someOtherFunction = "someOtherFunction()"
         case someThrowingFunction = "someThrowingFunction()"
         
     }
@@ -114,6 +119,10 @@ struct ProtocolNicelyMocked: Protocol, NicelyMocked {
     
     func someFunction(_ arg: Int) -> Int {
         return try! mocked(arguments: arg)
+    }
+    
+    func someOtherFunction() {
+        try? mocked()
     }
     
     func someThrowingFunction() throws {
