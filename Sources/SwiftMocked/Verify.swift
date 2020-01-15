@@ -70,28 +70,10 @@ public extension VerifiableCollection {
 
 public extension VerifiableCollection {
     
-    func total(_ total: UInt, file: StaticString = #file, line: UInt = #line) {
+    func total(_ comparator: (Int, Int) -> Bool, _ total: Int, file: StaticString = #file, line: UInt = #line) {
         assertion(
-            collection.count == total,
-            "expected total to equal \(total) instead of (total is \(collection.count))",
-            file,
-            line
-        )
-    }
-    
-    func total(lessThan total: UInt, file: StaticString = #file, line: UInt = #line) {
-        assertion(
-            collection.count < total,
-            "expected total to be less than \(total) (total is \(collection.count))",
-            file,
-            line
-        )
-    }
-    
-    func total(greaterThan total: UInt, file: StaticString = #file, line: UInt = #line) {
-        assertion(
-            collection.count > total,
-            "expected total to be greater than \(total) (total is \(collection.count))",
+            comparator(collection.count, total),
+            "expected comparison with total to pass (total is \(collection.count))",
             file,
             line
         )
