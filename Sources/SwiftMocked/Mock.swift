@@ -12,7 +12,7 @@ public class Mock<C: CalleeKey> {
 
 public struct Arguments {
     
-    let arguments: [Any?]
+    public let arguments: [Any?]
     
     init(_ arguments: [Any?]) {
         self.arguments = arguments
@@ -28,10 +28,6 @@ public extension Arguments {
         }
         
         return arguments[position] as? T
-    }
-    
-    var count: Int {
-        arguments.count
     }
     
 }
