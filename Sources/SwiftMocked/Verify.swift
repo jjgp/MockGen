@@ -17,10 +17,10 @@ public extension Verify {
     }
     
     func calls(missing callee: M.CalleeKeys, file: StaticString = #file, line: UInt = #line) {
-        let invocations = self.invocations(for: callee)
+        let collection = arguments(in: mocked.mock.calls, to: callee)
         assertion(
-            invocations.count == 0,
-            "expected \(callee.rawValue) to have not been invoked",
+            collection.count == 0,
+            "expected \(callee.stringValue) to have not been invoked",
             file,
             line
         )
@@ -28,25 +28,14 @@ public extension Verify {
     
     @discardableResult
     func calls(to callee: M.CalleeKeys, file: StaticString = #file, line: UInt = #line) -> Invocations {
-        let invocations = self.invocations(for: callee)
-        let stringValue = callee.stringValue
+        let collection = arguments(in: mocked.mock.calls, to: callee)
         assertion(
-            invocations.count > 0,
-            "expected \(stringValue) to have been invoked",
+            collection.count > 0,
+            "expected \(callee.stringValue) to have been invoked",
             file,
             line
         )
-        return Invocations(invocations, assertion: assertion)
-    }
-    
-}
-
-extension Verify {
-    
-    func invocations(for callee: M.CalleeKeys) -> [Arguments] {
-        return mocked.mock.calls
-            .filter { callee == $0.callee }
-            .compactMap { $0.arguments }
+        return Invocations(collection, assertion: assertion)
     }
     
 }
@@ -110,6 +99,36 @@ public extension VerifiableCollection {
     
 }
 
+public extension VerifiableCollection {
+    
+    func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> [Collectable] {
+        assertion(
+            head < collection.count,
+            "expected at least \(head) \(Collectable.self)(s) (total is \(collection.count))",
+            file,
+            line
+        )
+        guard head < collection.count, head < Int.max else {
+            return []
+        }
+        return Array(collection[(collection.count - Int(head))...]).reversed()
+    }
+    
+    func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> [Collectable] {
+        assertion(
+            tail < collection.count,
+            "expected at least \(tail) \(Collectable.self)(s) (total is \(collection.count))",
+            file,
+            line
+        )
+        guard tail < collection.count, tail < Int.max else {
+            return []
+        }
+        return Array(collection[..<Int(tail)])
+    }
+    
+}
+
 public struct Calls<C: CalleeKey>: VerifiableCollection {
     
     public let assertion: Assertion.Callback
@@ -124,7 +143,38 @@ public struct Calls<C: CalleeKey>: VerifiableCollection {
     
 }
 
-public struct Invocations : VerifiableCollection {
+public extension Calls {
+    
+    func callees() -> Callees<C> {
+        return Callees(collection.compactMap({ $0.callee }), assertion: assertion)
+    }
+    
+    func to(_ callee: C, file: StaticString = #file, line: UInt = #line) -> Invocations {
+        let collection = arguments(in: self.collection, to: callee)
+        assertion(
+            collection.count > 0,
+            "expected \(callee.stringValue) to have been invoked",
+            file,
+            line
+        )
+        return Invocations(collection, assertion: assertion)
+    }
+    
+}
+
+public struct Callees<C: CalleeKey>: VerifiableCollection {
+    
+    public let assertion: Assertion.Callback
+    public let collection: [C]
+    
+    public init(_ collection: [C], assertion: @escaping Assertion.Callback) {
+        self.assertion = assertion
+        self.collection = collection
+    }
+    
+}
+
+public struct Invocations: VerifiableCollection {
     
     public let assertion: Assertion.Callback
     public let collection: [Arguments]
@@ -134,4 +184,12 @@ public struct Invocations : VerifiableCollection {
         self.collection = collection
     }
     
+}
+
+fileprivate func arguments<C: CalleeKey>(in calls: [(C, Arguments)], to callee: C) -> [Arguments] {
+    return calls.filter {
+        callee == $0.0
+    }.compactMap {
+        $0.1
+    }
 }

@@ -24,7 +24,20 @@ final class SwiftMockedTests: XCTestCase {
         calls.total(5)
         calls.total(lessThan: 6)
         calls.total(greaterThan: 4)
-        var invocations = verify.calls(to: .someFunction)
+        XCTAssertEqual(calls.inspect()?.callee, .someOtherFunction)
+        XCTAssertEqual(calls.inspect(ago: 1)?.callee, .someFunction)
+        XCTAssertEqual(calls.inspect(ago: 2)?.callee, .someFunctionWithArg)
+        XCTAssertEqual(calls.inspect(ago: 3)?.callee, .someFunctionWithArg)
+        XCTAssertEqual(calls.inspect(ago: 4)?.callee, .someFunction)
+        XCTAssertEqual(
+            calls.callees().last(3),
+            [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        )
+        XCTAssertEqual(
+            calls.callees().first(3),
+            [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        )
+        var invocations = calls.to(.someFunction)
         invocations.total(2)
         invocations.total(lessThan: 3)
         invocations.total(greaterThan: 1)
