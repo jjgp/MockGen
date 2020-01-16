@@ -11,6 +11,17 @@ final class SwiftMockedTests: XCTestCase {
         XCTAssertEqual(protocolMocked.someFunction(420), 420)
     }
     
+    func testProtocolMockedStubs() {
+        let protocolMocked = ProtocolMocked()
+        protocolMocked.stub(.foo, returning: 42000)
+        XCTAssertEqual(protocolMocked.foo as? Int, 42000)
+        
+        protocolMocked.stub(.someFunctionWithArg) {
+            ($0.arguments.argument(0) ?? 0) * 100
+        }
+        XCTAssertEqual(protocolMocked.someFunction(420), 42000)
+    }
+    
     func testVerifyProtocolMocked() {
         let protocolMocked = ProtocolMocked()
         _ = protocolMocked.someFunction()
@@ -26,19 +37,15 @@ final class SwiftMockedTests: XCTestCase {
         calls.total(<=, 5)
         calls.total(<, 6)
         calls.total(>, 4)
-        XCTAssertEqual(calls.inspect()?.callee, .someOtherFunction)
-        XCTAssertEqual(calls.inspect(ago: 1)?.callee, .someFunction)
-        XCTAssertEqual(calls.inspect(ago: 2)?.callee, .someFunctionWithArg)
-        XCTAssertEqual(calls.inspect(ago: 3)?.callee, .someFunctionWithArg)
-        XCTAssertEqual(calls.inspect(ago: 4)?.callee, .someFunction)
-        XCTAssertEqual(
-            calls.callees().last(3),
-            [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        )
-        XCTAssertEqual(
-            calls.callees().first(3),
-            [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
-        )
+//        calls.inspect()?.callee == .someOtherFunction
+//        XCTAssertEqual(calls.inspect(ago: 1)?.callee, .someFunction)
+//        XCTAssertEqual(calls.inspect(ago: 2)?.callee, .someFunctionWithArg)
+//        XCTAssertEqual(calls.inspect(ago: 3)?.callee, .someFunctionWithArg)
+//        XCTAssertEqual(calls.inspect(ago: 4)?.callee, .someFunction)
+        
+        calls.callees().last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        calls.callees().first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        
         var invocations = calls.to(.someFunction)
         invocations.total(==, 2)
         invocations.total(>=, 2)
@@ -46,8 +53,9 @@ final class SwiftMockedTests: XCTestCase {
         invocations.total(<, 3)
         invocations.total(>, 1)
         invocations = verify.calls(to: .someFunctionWithArg)
-        XCTAssertEqual(invocations.inspect()?.argument(0), 42)
-        XCTAssertEqual(invocations.inspect(ago: 1)?.argument(0), 41)
+        invocations.inspect().argument(0) == 42
+        invocations.inspect(ago: 1).argument(0) == 41
+        
         verify.calls(missing: .someThrowingFunction)
     }
     

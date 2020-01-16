@@ -53,7 +53,7 @@ public protocol VerifiableCollection {
 
 public extension VerifiableCollection {
     
-    func inspect(ago: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Collectable? {
+    func inspect(ago: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<Collectable?> {
         assertion(
             ago < collection.count,
             "expected a \(Collectable.self) \(ago) ago (total is \(collection.count))",
@@ -61,9 +61,9 @@ public extension VerifiableCollection {
             line
         )
         guard ago < collection.count, ago < Int.max else {
-            return nil
+            return Verifiable(file: file, line: line, value: nil)
         }
-        return collection[Int(ago)]
+        return Verifiable(file: file, line: line, value: collection[Int(ago)])
     }
     
 }
@@ -83,7 +83,7 @@ public extension VerifiableCollection {
 
 public extension VerifiableCollection {
     
-    func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> [Collectable] {
+    func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[Collectable]> {
         assertion(
             head < collection.count,
             "expected at least \(head) \(Collectable.self)(s) (total is \(collection.count))",
@@ -91,12 +91,12 @@ public extension VerifiableCollection {
             line
         )
         guard head < collection.count, head < Int.max else {
-            return []
+            return Verifiable(file: file, line: line, value: [])
         }
-        return Array(collection[(collection.count - Int(head))...]).reversed()
+        return Verifiable(file: file, line: line, value: Array(collection[(collection.count - Int(head))...]).reversed())
     }
     
-    func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> [Collectable] {
+    func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[Collectable]> {
         assertion(
             tail < collection.count,
             "expected at least \(tail) \(Collectable.self)(s) (total is \(collection.count))",
@@ -104,9 +104,9 @@ public extension VerifiableCollection {
             line
         )
         guard tail < collection.count, tail < Int.max else {
-            return []
+            return Verifiable(file: file, line: line, value: [])
         }
-        return Array(collection[..<Int(tail)])
+        return Verifiable(file: file, line: line, value: Array(collection[..<Int(tail)]))
     }
     
 }
@@ -174,4 +174,48 @@ fileprivate func arguments<C: CalleeKey>(in calls: [(C, Arguments)], to callee: 
     }.compactMap {
         $0.1
     }
+}
+
+public struct Verifiable<T> {
+    
+    let file: StaticString
+    let line: UInt
+    let value: T
+    
+}
+
+public extension Verifiable where T == Arguments? {
+    
+    func argument<U>(_ position: Int, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
+        let argument: U? = value?.argument(position)
+        return .init(file: file, line: line, value: argument)
+    }
+    
+}
+
+public func ==<T: Equatable>(lhs: Verifiable<Any?>, rhs: T?) {
+    Assertion.default(
+        (lhs.value as? T) == rhs,
+        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        lhs.file,
+        lhs.line
+    )
+}
+
+public func ==<C: CalleeKey>(lhs: Verifiable<Array<C>>, rhs: [C]) {
+    Assertion.default(
+        lhs.value == rhs,
+        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        lhs.file,
+        lhs.line
+    )
+}
+
+public func ==<C: CalleeKey>(lhs: Verifiable<C>, rhs: C) {
+    Assertion.default(
+        lhs.value == rhs,
+        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        lhs.file,
+        lhs.line
+    )
 }
