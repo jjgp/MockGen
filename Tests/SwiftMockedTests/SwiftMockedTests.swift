@@ -30,33 +30,35 @@ final class SwiftMockedTests: XCTestCase {
         _ = protocolMocked.someFunction()
         protocolMocked.someOtherFunction()
         
-        let verify = Verify(protocolMocked)
-        let calls = verify.calls()
-        calls.total(==, 5)
-        calls.total(>=, 5)
-        calls.total(<=, 5)
-        calls.total(<, 6)
-        calls.total(>, 4)
+        // ----- -----
+        
+        let calls = protocolMocked.calls()
+        calls.total() == 5
+        calls.total() >= 5
+        calls.total() <= 5
+        calls.total() < 6
+        calls.total() > 4
 //        calls.inspect()?.callee == .someOtherFunction
 //        XCTAssertEqual(calls.inspect(ago: 1)?.callee, .someFunction)
 //        XCTAssertEqual(calls.inspect(ago: 2)?.callee, .someFunctionWithArg)
 //        XCTAssertEqual(calls.inspect(ago: 3)?.callee, .someFunctionWithArg)
 //        XCTAssertEqual(calls.inspect(ago: 4)?.callee, .someFunction)
         
-        calls.callees().last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        calls.callees().first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        protocolMocked.callees().last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        protocolMocked.callees().first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
         
-        var invocations = calls.to(.someFunction)
-        invocations.total(==, 2)
-        invocations.total(>=, 2)
-        invocations.total(<=, 2)
-        invocations.total(<, 3)
-        invocations.total(>, 1)
-        invocations = verify.calls(to: .someFunctionWithArg)
+        var invocations = protocolMocked.calls(to: .someFunction)
+        invocations.total() == 2
+        invocations.total() >= 2
+        invocations.total() <= 2
+        invocations.total() < 3
+        invocations.total() > 1
+        
+        invocations = protocolMocked.calls(to: .someFunctionWithArg)
         invocations.inspect().argument(0) == 42
         invocations.inspect(ago: 1).argument(0) == 41
         
-        verify.calls(missing: .someThrowingFunction)
+        protocolMocked.calls(missing: .someThrowingFunction)
     }
     
 }
