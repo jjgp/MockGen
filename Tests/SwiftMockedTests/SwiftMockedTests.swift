@@ -38,14 +38,17 @@ final class SwiftMockedTests: XCTestCase {
         calls.total() <= 5
         calls.total() < 6
         calls.total() > 4
-//        calls.inspect()?.callee == .someOtherFunction
-//        XCTAssertEqual(calls.inspect(ago: 1)?.callee, .someFunction)
-//        XCTAssertEqual(calls.inspect(ago: 2)?.callee, .someFunctionWithArg)
-//        XCTAssertEqual(calls.inspect(ago: 3)?.callee, .someFunctionWithArg)
-//        XCTAssertEqual(calls.inspect(ago: 4)?.callee, .someFunction)
         
-        protocolMocked.callees().last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        protocolMocked.callees().first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        callee(in: calls) == .someOtherFunction
+        callee(in: calls, at: 1) == .someFunction
+        callee(in: calls, at: 2) == .someFunctionWithArg
+        callee(in: calls, at: 3) == .someFunctionWithArg
+        callee(in: calls, at: 4) == .someFunction
+        
+        protocolMocked.callees()
+            .last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        protocolMocked.callees()
+            .first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
         
         var invocations = protocolMocked.calls(to: .someFunction)
         invocations.total() == 2
@@ -56,7 +59,7 @@ final class SwiftMockedTests: XCTestCase {
         
         invocations = protocolMocked.calls(to: .someFunctionWithArg)
         invocations.inspect().argument(0) == 42
-        invocations.inspect(ago: 1).argument(0) == 41
+        invocations.inspect(1).argument(0) == 41
         
         protocolMocked.calls(missing: .someThrowingFunction)
     }

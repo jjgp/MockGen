@@ -12,6 +12,22 @@ public struct Verifiable<T> {
     
 }
 
+public extension Verifiable {
+    
+    func map<U>(_ transform: (T) throws -> U, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
+        return Verifiable<U?>(try transform(value),
+                              file: file,
+                              line: line)
+    }
+    
+    func flatMap<U>(_ transform: (T) throws -> U?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
+        return Verifiable<U?>(try transform(value),
+                              file: file,
+                              line: line)
+    }
+    
+}
+
 public extension Verifiable where T == Arguments? {
     
     func argument<U>(_ position: Int, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
@@ -20,9 +36,19 @@ public extension Verifiable where T == Arguments? {
     }
     
 }
-
 public extension Verifiable where T: Collection {
     
+    func compactMap<ElementOfResult>(_ transform: (T.Element) throws -> ElementOfResult?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<[ElementOfResult]> {
+        return Verifiable<[ElementOfResult]>(try value.compactMap(transform),
+                                             file: file,
+                                             line: line)
+    }
+    
+    // TODO: add other Collection methods
+}
+
+public extension Verifiable where T: Collection {
+
     func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
         Assertion.default(
             head < value.count,
@@ -39,26 +65,26 @@ public extension Verifiable where T: Collection {
         return Verifiable<[T.Element]>(Array(value[index...]).reversed(), file: file, line: line)
     }
     
-    func inspect(ago: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<T.Element?> {
+    func inspect(_ position: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<T.Element?> {
         Assertion.default(
-            ago < value.count,
-            "expected a \(T.Element.self) \(ago) ago (total is \(value.count))",
+            position < value.count,
+            "WIP",
             file,
             line
         )
         
-        guard ago < value.count, ago < Int.max else {
+        guard position < value.count, position < Int.max else {
             return Verifiable<T.Element?>(nil, file: file, line: line)
         }
         
-        let index = value.index(value.startIndex, offsetBy: Int(ago))
+        let index = value.index(value.startIndex, offsetBy: Int(position))
         return Verifiable<T.Element?>(value[index], file: file, line: line)
     }
     
     func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
         Assertion.default(
             tail < value.count,
-            "expected at least \(tail) \(T.Element.self)(s) (total is \(value.count))",
+            "WIP",
             file,
             line
         )
@@ -80,7 +106,7 @@ public extension Verifiable where T: Collection {
 public func ==<T: Equatable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
         lhs.value == rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -89,7 +115,7 @@ public func ==<T: Equatable>(lhs: Verifiable<T>, rhs: T) {
 public func <=<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
         lhs.value <= rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -98,7 +124,7 @@ public func <=<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
 public func >=<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
         lhs.value >= rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -107,7 +133,7 @@ public func >=<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
 public func <<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
         lhs.value < rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -116,7 +142,7 @@ public func <<T: Comparable>(lhs: Verifiable<T>, rhs: T) {
 public func ><T: Comparable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
         lhs.value > rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -125,7 +151,7 @@ public func ><T: Comparable>(lhs: Verifiable<T>, rhs: T) {
 public func ==<T: Equatable>(lhs: Verifiable<Any?>, rhs: T) {
     Assertion.default(
         (lhs.value as? T) == rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -134,7 +160,7 @@ public func ==<T: Equatable>(lhs: Verifiable<Any?>, rhs: T) {
 public func ==<C: CalleeKey>(lhs: Verifiable<Array<C>>, rhs: [C]) {
     Assertion.default(
         lhs.value == rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -143,7 +169,7 @@ public func ==<C: CalleeKey>(lhs: Verifiable<Array<C>>, rhs: [C]) {
 public func ==<C: CalleeKey>(lhs: Verifiable<C>, rhs: C) {
     Assertion.default(
         lhs.value == rhs,
-        "expected \(String(describing: lhs.value)) to equal \(String(describing: rhs))",
+        "WIP",
         lhs.file,
         lhs.line
     )
@@ -160,11 +186,11 @@ public extension Mocked {
     }
     
     func calls(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
-        let collection = arguments(in: mock.calls, to: callee)
+        let invocations = self.arguments(to: callee)
         
         Assertion.default(
-            collection.count == 0,
-            "expected \(callee.stringValue) to have not been invoked",
+            invocations.count == 0,
+            "WIP",
             file,
             line
         )
@@ -172,24 +198,50 @@ public extension Mocked {
     
     @discardableResult
     func calls(to callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) -> Verifiable<[Arguments]> {
-        let collection = arguments(in: mock.calls, to: callee)
+        let invocations = arguments(to: callee)
         
         Assertion.default(
-            collection.count > 0,
-            "expected \(callee.stringValue) to have been invoked",
+            invocations.count > 0,
+            "WIP",
             file,
             line
         )
         
-        return Verifiable(collection, file: file, line: line)
+        return Verifiable(invocations, file: file, line: line)
     }
     
 }
 
-fileprivate func arguments<C: CalleeKey>(in calls: [(C, Arguments)], to callee: C) -> [Arguments] {
-    return calls.filter {
-        callee == $0.0
-    }.compactMap {
-        $0.1
+fileprivate extension Mocked {
+    
+    func arguments(to callee: CalleeKeys) -> [Arguments] {
+        return mock.calls.filter {
+            callee == $0.0
+        }.compactMap {
+            $0.1
+        }
     }
+    
+}
+
+func arguments<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
+                             at position: UInt = 0,
+                             file: StaticString = #file,
+                             line: UInt = #line) -> Verifiable<Arguments?> {
+    return calls.inspect(position).flatMap({ $0?.arguments })
+}
+
+func callee<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
+                          at position: UInt = 0,
+                          file: StaticString = #file,
+                          line: UInt = #line) -> Verifiable<C?> {
+    return calls.inspect(position).flatMap({ $0?.callee })
+}
+
+func invocations<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
+                               at position: UInt = 0,
+                               file: StaticString = #file,
+                               line: UInt = #line) -> Verifiable<C?> {
+    // TODO: useful to have filter here
+    fatalError()
 }
