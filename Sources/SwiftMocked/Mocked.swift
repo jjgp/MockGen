@@ -5,7 +5,7 @@ public protocol Mocked {
     var mock: Mock<CalleeKeys> { get }
     
     func defaultStub() -> Stub?
-    func mocked(callee stringValue: String, arguments: Any?...) throws -> Any?
+    func mocked(callee stringValue: String, arguments: Any?...) throws -> Any!
     func mocked<T>(callee stringValue: String, arguments: Any?...) throws -> T!
     func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub)
     func stub(_ callee: CalleeKeys, returning value: Any?)
@@ -23,7 +23,7 @@ public extension Mocked {
 public extension Mocked {
     
     @discardableResult
-    func mocked(callee stringValue: String = #function, arguments: Any?...) throws -> Any? {
+    func mocked(callee stringValue: String = #function, arguments: Any?...) throws -> Any! {
         let call = recorded(stringValue, arguments)
         return try mock.stubs[stringValue]?(call) ?? defaultStub()?(call)
     }

@@ -22,12 +22,16 @@ public struct Arguments {
 
 public extension Arguments {
 
-    func argument<T>(_ position: Int) -> T? {
+    func argument(_ position: Int) -> Any? {
         guard position < arguments.count else {
             return nil
         }
         
-        return arguments[position] as? T
+        return arguments[position]
+    }
+    
+    func argument<T>(_ position: Int) -> T? {
+        return argument(position) as? T
     }
     
 }
