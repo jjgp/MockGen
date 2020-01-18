@@ -45,6 +45,9 @@ final class SwiftMockedTests: XCTestCase {
         callee(in: calls, at: 3) == .someFunctionWithArg
         callee(in: calls, at: 4) == .someFunction
         
+        arguments(in: calls, at: 2).argument() == 42
+        arguments(in: calls, at: 3).argument() == 41
+        
         protocolMocked.callees()
             .last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
         protocolMocked.callees()
@@ -58,8 +61,8 @@ final class SwiftMockedTests: XCTestCase {
         invocations.total() > 1
         
         invocations = protocolMocked.calls(to: .someFunctionWithArg)
-        invocations.inspect().argument(0) == 42
-        invocations.inspect(1).argument(0) == 41
+        invocations.inspect().argument() == 42
+        invocations.inspect(1).argument() == 41
         
         protocolMocked.calls(missing: .someThrowingFunction)
     }

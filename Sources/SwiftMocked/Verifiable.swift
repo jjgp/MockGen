@@ -30,25 +30,15 @@ public extension Verifiable {
 
 public extension Verifiable where T == Arguments? {
     
-    func argument<U>(_ position: Int, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
+    func argument<U>(_ position: Int = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
         let argument: U? = value?.argument(position)
         return .init(argument, file: file, line: line)
     }
     
 }
-public extension Verifiable where T: Collection {
-    
-    func compactMap<ElementOfResult>(_ transform: (T.Element) throws -> ElementOfResult?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<[ElementOfResult]> {
-        return Verifiable<[ElementOfResult]>(try value.compactMap(transform),
-                                             file: file,
-                                             line: line)
-    }
-    
-    // TODO: add other Collection methods
-}
 
 public extension Verifiable where T: Collection {
-
+    
     func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
         Assertion.default(
             head < value.count,
@@ -102,6 +92,59 @@ public extension Verifiable where T: Collection {
     }
     
 }
+
+public extension Mocked {
+    
+    func calls(file: StaticString = #file, line: UInt = #line) -> Verifiable<[Call]> {
+        return Verifiable(mock.calls, file: file, line: line)
+    }
+    
+    func callees(file: StaticString = #file, line: UInt = #line) -> Verifiable<[CalleeKeys]> {
+        return Verifiable(mock.calls.compactMap({ $0.callee }), file: file, line: line)
+    }
+    
+    func calls(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
+        let invocations = self.arguments(to: callee)
+        
+        Assertion.default(
+            invocations.count == 0,
+            "WIP",
+            file,
+            line
+        )
+    }
+    
+    @discardableResult
+    func calls(to callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) -> Verifiable<[Arguments]> {
+        let invocations = arguments(to: callee)
+        
+        Assertion.default(
+            invocations.count > 0,
+            "WIP",
+            file,
+            line
+        )
+        
+        return Verifiable(invocations, file: file, line: line)
+    }
+    
+}
+
+// MARK:- Mocked Extension
+
+fileprivate extension Mocked {
+    
+    func arguments(to callee: CalleeKeys) -> [Arguments] {
+        return mock.calls.filter {
+            callee == $0.0
+        }.compactMap {
+            $0.1
+        }
+    }
+    
+}
+
+// MARK:- Operators
 
 public func ==<T: Equatable>(lhs: Verifiable<T>, rhs: T) {
     Assertion.default(
@@ -175,73 +218,43 @@ public func ==<C: CalleeKey>(lhs: Verifiable<C>, rhs: C) {
     )
 }
 
-public extension Mocked {
-    
-    func calls(file: StaticString = #file, line: UInt = #line) -> Verifiable<[Call]> {
-        return Verifiable(mock.calls, file: file, line: line)
-    }
-    
-    func callees(file: StaticString = #file, line: UInt = #line) -> Verifiable<[CalleeKeys]> {
-        return Verifiable(mock.calls.compactMap({ $0.callee }), file: file, line: line)
-    }
-    
-    func calls(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
-        let invocations = self.arguments(to: callee)
-        
-        Assertion.default(
-            invocations.count == 0,
-            "WIP",
-            file,
-            line
-        )
-    }
-    
-    @discardableResult
-    func calls(to callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) -> Verifiable<[Arguments]> {
-        let invocations = arguments(to: callee)
-        
-        Assertion.default(
-            invocations.count > 0,
-            "WIP",
-            file,
-            line
-        )
-        
-        return Verifiable(invocations, file: file, line: line)
-    }
-    
-}
+// MARK:- Verifiable Calls Helpers
 
-fileprivate extension Mocked {
-    
-    func arguments(to callee: CalleeKeys) -> [Arguments] {
-        return mock.calls.filter {
-            callee == $0.0
-        }.compactMap {
-            $0.1
-        }
-    }
-    
-}
+public typealias VerifiableCalls<C: CalleeKey> = Verifiable<[(callee: C, arguments: Arguments)]>
 
-func arguments<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
-                             at position: UInt = 0,
-                             file: StaticString = #file,
-                             line: UInt = #line) -> Verifiable<Arguments?> {
+public func arguments<C: CalleeKey>(in calls: VerifiableCalls<C>,
+                                    at position: UInt = 0,
+                                    file: StaticString = #file,
+                                    line: UInt = #line) -> Verifiable<Arguments?> {
     return calls.inspect(position).flatMap({ $0?.arguments })
 }
 
-func callee<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
-                          at position: UInt = 0,
-                          file: StaticString = #file,
-                          line: UInt = #line) -> Verifiable<C?> {
+public func callee<C: CalleeKey>(in calls: VerifiableCalls<C>,
+                                 at position: UInt = 0,
+                                 file: StaticString = #file,
+                                 line: UInt = #line) -> Verifiable<C?> {
+    // TODO: replace with compact map?
     return calls.inspect(position).flatMap({ $0?.callee })
 }
 
-func invocations<C: CalleeKey>(in calls: Verifiable<[(callee: C, arguments: Arguments)]>,
-                               at position: UInt = 0,
-                               file: StaticString = #file,
-                               line: UInt = #line) -> Verifiable<C?> {
+public func invocations<C: CalleeKey>(in calls: VerifiableCalls<C>,
+                                      to callee: C,
+                                      file: StaticString = #file,
+                                      line: UInt = #line) -> Verifiable<C?> {
     // TODO: useful to have filter here
     fatalError()
 }
+
+// MARK:- Verifiable Collection Methods
+
+public extension Verifiable where T: Collection {
+    
+    func compactMap<ElementOfResult>(_ transform: (T.Element) throws -> ElementOfResult?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<[ElementOfResult]> {
+        return Verifiable<[ElementOfResult]>(try value.compactMap(transform),
+                                             file: file,
+                                             line: line)
+    }
+    
+    // TODO: add other Collection methods
+}
+
