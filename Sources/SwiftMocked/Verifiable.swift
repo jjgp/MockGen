@@ -12,95 +12,12 @@ public struct Verifiable<T> {
     
 }
 
-public extension Verifiable {
-    
-    func map<U>(_ transform: (T) throws -> U, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
-        return Verifiable<U?>(try transform(value),
-                              file: file,
-                              line: line)
-    }
-    
-    func flatMap<U>(_ transform: (T) throws -> U?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
-        return Verifiable<U?>(try transform(value),
-                              file: file,
-                              line: line)
-    }
-    
-}
-
-public extension Verifiable where T == Arguments? {
-    
-    func argument<U>(_ position: Int = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
-        let argument: U? = value?.argument(position)
-        return .init(argument, file: file, line: line)
-    }
-    
-}
-
-public extension Verifiable where T: Collection {
-    
-    func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
-        Assertion.default(
-            head < value.count,
-            "expected at least \(head) \(T.self)(s) (total is \(value.count))",
-            file,
-            line
-        )
-        
-        guard head < value.count, head < Int.max else {
-            return Verifiable<[T.Element]>([], file: file, line: line)
-        }
-        
-        let index = value.index(value.startIndex, offsetBy: value.count - Int(head))
-        return Verifiable<[T.Element]>(Array(value[index...]).reversed(), file: file, line: line)
-    }
-    
-    func inspect(_ position: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<T.Element?> {
-        Assertion.default(
-            position < value.count,
-            "WIP",
-            file,
-            line
-        )
-        
-        guard position < value.count, position < Int.max else {
-            return Verifiable<T.Element?>(nil, file: file, line: line)
-        }
-        
-        let index = value.index(value.startIndex, offsetBy: Int(position))
-        return Verifiable<T.Element?>(value[index], file: file, line: line)
-    }
-    
-    func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
-        Assertion.default(
-            tail < value.count,
-            "WIP",
-            file,
-            line
-        )
-        
-        guard tail < value.count, tail < Int.max else {
-            return Verifiable<[T.Element]>([], file: file, line: line)
-        }
-        
-        let index = value.index(value.startIndex, offsetBy: Int(tail))
-        return Verifiable<[T.Element]>(Array(value[..<index]), file: file, line: line)
-    }
-    
-    func total(file: StaticString = #file, line: UInt = #line) -> Verifiable<Int> {
-        return Verifiable<Int>(value.count, file: file, line: line)
-    }
-    
-}
+// MARK:- Mocked Extension
 
 public extension Mocked {
     
     func calls(file: StaticString = #file, line: UInt = #line) -> Verifiable<[Call]> {
         return Verifiable(mock.calls, file: file, line: line)
-    }
-    
-    func callees(file: StaticString = #file, line: UInt = #line) -> Verifiable<[CalleeKeys]> {
-        return Verifiable(mock.calls.compactMap({ $0.callee }), file: file, line: line)
     }
     
     func calls(missing callee: CalleeKeys, file: StaticString = #file, line: UInt = #line) {
@@ -130,7 +47,13 @@ public extension Mocked {
     
 }
 
-// MARK:- Mocked Extension
+public extension Mocked {
+    
+    func callees(file: StaticString = #file, line: UInt = #line) -> Verifiable<[CalleeKeys]> {
+        return Verifiable(mock.calls.compactMap({ $0.callee }), file: file, line: line)
+    }
+    
+}
 
 fileprivate extension Mocked {
     
@@ -218,31 +141,63 @@ public func ==<C: CalleeKey>(lhs: Verifiable<C>, rhs: C) {
     )
 }
 
-// MARK:- Verifiable Calls Helpers
+// MARK:-
 
 public typealias VerifiableCalls<C: CalleeKey> = Verifiable<[(callee: C, arguments: Arguments)]>
 
-public func arguments<C: CalleeKey>(in calls: VerifiableCalls<C>,
-                                    at position: UInt = 0,
-                                    file: StaticString = #file,
-                                    line: UInt = #line) -> Verifiable<Arguments?> {
-    return calls.inspect(position).flatMap({ $0?.arguments })
-}
-
-public func callee<C: CalleeKey>(in calls: VerifiableCalls<C>,
-                                 at position: UInt = 0,
-                                 file: StaticString = #file,
-                                 line: UInt = #line) -> Verifiable<C?> {
-    // TODO: replace with compact map?
-    return calls.inspect(position).flatMap({ $0?.callee })
-}
-
-public func invocations<C: CalleeKey>(in calls: VerifiableCalls<C>,
-                                      to callee: C,
+public enum Verify {
+    
+    static func arguments<C: CalleeKey>(in calls: VerifiableCalls<C>,
+                                        at position: UInt = 0,
+                                        file: StaticString = #file,
+                                        line: UInt = #line) -> Verifiable<Arguments?> {
+        return calls.inspect(position).flatMap({ $0?.arguments })
+    }
+    
+    static func callees<C: CalleeKey>(in calls: VerifiableCalls<C>,
                                       file: StaticString = #file,
-                                      line: UInt = #line) -> Verifiable<C?> {
-    // TODO: useful to have filter here
-    fatalError()
+                                      line: UInt = #line) -> Verifiable<[C]> {
+        return calls.compactMap({ $0.callee })
+    }
+    
+    static func invocations<C: CalleeKey>(in calls: VerifiableCalls<C>,
+                                          to callee: C,
+                                          file: StaticString = #file,
+                                          line: UInt = #line) -> Verifiable<[Arguments]> {
+        return Verifiable<[Arguments]>(calls.value.lazy.filter({ $0.callee == callee }).compactMap({ $0.arguments }),
+                                       file: file,
+                                       line: line)
+    }
+    
+}
+
+// MARK:-
+
+public extension Verifiable {
+    
+    func map<U>(_ transform: (T) throws -> U, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
+        return Verifiable<U?>(try transform(value),
+                              file: file,
+                              line: line)
+    }
+    
+    func flatMap<U>(_ transform: (T) throws -> U?, file: StaticString = #file, line: UInt = #line) rethrows -> Verifiable<U?> {
+        return Verifiable<U?>(try transform(value),
+                              file: file,
+                              line: line)
+    }
+    
+}
+
+// MARK:-
+
+public extension Verifiable where T == Arguments? {
+    
+    func argument<U>(_ position: Int = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<U?> {
+        let argument: U? = value?.argument(position)
+        return .init(argument, file: file, line: line)
+    }
+    
 }
 
 // MARK:- Verifiable Collection Methods
@@ -258,3 +213,58 @@ public extension Verifiable where T: Collection {
     // TODO: add other Collection methods
 }
 
+public extension Verifiable where T: Collection {
+    
+    func first(_ head: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
+        Assertion.default(
+            head < value.count,
+            "expected at least \(head) \(T.self)(s) (total is \(value.count))",
+            file,
+            line
+        )
+        
+        guard head < value.count, head < Int.max else {
+            return Verifiable<[T.Element]>([], file: file, line: line)
+        }
+        
+        let index = value.index(value.startIndex, offsetBy: value.count - Int(head))
+        return Verifiable<[T.Element]>(Array(value[index...]).reversed(), file: file, line: line)
+    }
+    
+    func inspect(_ position: UInt = 0, file: StaticString = #file, line: UInt = #line) -> Verifiable<T.Element?> {
+        Assertion.default(
+            position < value.count,
+            "WIP",
+            file,
+            line
+        )
+        
+        guard position < value.count, position < Int.max else {
+            return Verifiable<T.Element?>(nil, file: file, line: line)
+        }
+        
+        let index = value.index(value.startIndex, offsetBy: Int(position))
+        return Verifiable<T.Element?>(value[index], file: file, line: line)
+    }
+    
+    func last(_ tail: UInt = 1, file: StaticString = #file, line: UInt = #line) -> Verifiable<[T.Element]> {
+        Assertion.default(
+            tail < value.count,
+            "WIP",
+            file,
+            line
+        )
+        
+        guard tail < value.count, tail < Int.max else {
+            return Verifiable<[T.Element]>([], file: file, line: line)
+        }
+        
+        let index = value.index(value.startIndex, offsetBy: Int(tail))
+        return Verifiable<[T.Element]>(Array(value[..<index]), file: file, line: line)
+    }
+    
+    func total(file: StaticString = #file, line: UInt = #line) -> Verifiable<Int> {
+        return Verifiable<Int>(value.count, file: file, line: line)
+    }
+    
+}

@@ -20,6 +20,13 @@ final class SwiftMockedTests: XCTestCase {
             ($0.arguments.argument(0) ?? 0) * 100
         }
         XCTAssertEqual(protocolMocked.someFunction(420), 42000)
+        
+        var call: ProtocolMocked.Call?
+        protocolMocked.stub(.someOtherFunction) {
+            call = $0
+        }
+        protocolMocked.someOtherFunction()
+        XCTAssertNotNil(call)
     }
     
     func testVerifyProtocolMocked() {
@@ -30,8 +37,6 @@ final class SwiftMockedTests: XCTestCase {
         _ = protocolMocked.someFunction()
         protocolMocked.someOtherFunction()
         
-        // ----- -----
-        
         let calls = protocolMocked.calls()
         calls.total() == 5
         calls.total() >= 5
@@ -39,28 +44,23 @@ final class SwiftMockedTests: XCTestCase {
         calls.total() < 6
         calls.total() > 4
         
-        callee(in: calls) == .someOtherFunction
-        callee(in: calls, at: 1) == .someFunction
-        callee(in: calls, at: 2) == .someFunctionWithArg
-        callee(in: calls, at: 3) == .someFunctionWithArg
-        callee(in: calls, at: 4) == .someFunction
+        let callees = Verify.callees(in: calls)
+        callees.inspect() == .someOtherFunction
+        callees.inspect(1) == .someFunction
+        callees.inspect(2) == .someFunctionWithArg
+        callees.inspect(3) == .someFunctionWithArg
+        callees.inspect(4) == .someFunction
+        callees.last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        callees.first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
         
-        arguments(in: calls, at: 2).argument() == 42
-        arguments(in: calls, at: 3).argument() == 41
-        
-        protocolMocked.callees()
-            .last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        protocolMocked.callees()
-            .first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
-        
-        var invocations = protocolMocked.calls(to: .someFunction)
+        var invocations = Verify.invocations(in: calls, to: .someFunction)
         invocations.total() == 2
         invocations.total() >= 2
         invocations.total() <= 2
         invocations.total() < 3
         invocations.total() > 1
         
-        invocations = protocolMocked.calls(to: .someFunctionWithArg)
+        invocations = Verify.invocations(in: calls, to: .someFunctionWithArg)
         invocations.inspect().argument() == 42
         invocations.inspect(1).argument() == 41
         

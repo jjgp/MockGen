@@ -8,6 +8,7 @@ public protocol Mocked {
     func mocked(callee stringValue: String, arguments: Any?...) throws -> Any!
     func mocked<T>(callee stringValue: String, arguments: Any?...) throws -> T!
     func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub)
+    func stub(_ callee: CalleeKeys, doing: @escaping VoidStub)
     func stub(_ callee: CalleeKeys, returning value: Any?)
     func stub(_ callee: CalleeKeys, throwing value: Error)
     
@@ -17,6 +18,7 @@ public extension Mocked {
     
     typealias Call = Mock<CalleeKeys>.Call
     typealias Stub = Mock<CalleeKeys>.Stub
+    typealias VoidStub = (Call) throws -> Void
     
 }
 
@@ -52,12 +54,17 @@ public extension Mocked {
         mock.stubs[callee.stringValue] = doing
     }
     
+    func stub(_ callee: CalleeKeys, doing: @escaping VoidStub) {
+        mock.stubs[callee.stringValue] = doing
+    }
+    
     func stub(_ callee: CalleeKeys, returning value: Any?) {
         stub(callee) { _ in value }
     }
     
     func stub(_ callee: CalleeKeys, throwing value: Error) {
-        stub(callee) { _ in throw value }
+        let stub: Stub = { _ in throw value }
+        self.stub(callee, doing: stub)
     }
     
     func removeStubs() {
