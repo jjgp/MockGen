@@ -160,8 +160,8 @@ public enum Verify {
         return calls.compactMap({ $0.callee })
     }
     
-    static func invocations<C: CalleeKey>(in calls: VerifiableCalls<C>,
-                                          to callee: C,
+    static func invocations<C: CalleeKey>(to callee: C,
+                                          in calls: VerifiableCalls<C>,
                                           file: StaticString = #file,
                                           line: UInt = #line) -> Verifiable<[Arguments]> {
         return Verifiable<[Arguments]>(calls.value.lazy.filter({ $0.callee == callee }).compactMap({ $0.arguments }),

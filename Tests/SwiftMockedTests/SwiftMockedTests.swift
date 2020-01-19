@@ -53,14 +53,14 @@ final class SwiftMockedTests: XCTestCase {
         callees.last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
         callees.first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
         
-        var invocations = Verify.invocations(in: calls, to: .someFunction)
+        var invocations = Verify.invocations(to: .someFunction, in: calls)
         invocations.total() == 2
         invocations.total() >= 2
         invocations.total() <= 2
         invocations.total() < 3
         invocations.total() > 1
         
-        invocations = Verify.invocations(in: calls, to: .someFunctionWithArg)
+        invocations = Verify.invocations(to: .someFunctionWithArg, in: calls)
         invocations.inspect().argument() == 42
         invocations.inspect(1).argument() == 41
         
