@@ -67,6 +67,10 @@ final class SwiftMockedTests: XCTestCase {
         protocolMocked.calls(missing: .someThrowingFunction)
     }
     
+    func testClassMockedStubs() {
+        
+    }
+    
 }
 
 protocol Protocol {
@@ -118,6 +122,39 @@ extension ProtocolMocked {
 }
 
 struct AnError: Error {}
+
+class ClassA {
+    
+    func someFunction() {
+        
+    }
+    
+}
+
+class ClassB: ClassA, ClassMocked {
+    func stub(_ callee: ClassB.OverriddenCalleeKeys, doing: @escaping ((callee: ClassB.CalleeKeys, arguments: Arguments), () -> Void) throws -> Any?) {
+    }
+    let mock = Mock<CalleeKeys>()
+    func defaultStub() -> (((callee: ClassB.CalleeKeys, arguments: Arguments)) throws -> Any?)? {
+        nil
+    }
+    
+    enum OverriddenCalleeKeys: String, CalleeKey {
+        case someFunction
+    }
+    
+    enum CalleeKeys: String, CalleeKey {
+        case none = ""
+    }
+    
+        
+    override func someFunction() {
+        let superCall: SuperCall = {
+            super.someFunction()
+        }
+        try! mocked(super: superCall)
+    }
+}
 
 extension SwiftMockedTests {
     
