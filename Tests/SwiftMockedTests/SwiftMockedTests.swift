@@ -81,53 +81,24 @@ protocol Protocol {
 }
 
 struct ProtocolMocked: Protocol, Mocked {
-    
     enum CalleeKeys: String, CalleeKey {
-        
         case foo = "foo"
         case bar = "bar"
         case someFunction = "someFunction()"
         case someFunctionWithArg = "someFunction(_:)"
         case someOtherFunction = "someOtherFunction()"
         case someThrowingFunction = "someThrowingFunction()"
-        
     }
-    
-    var foo: Any {
-        get {
-            try! mocked() as Any
-        }
-    }
-    var bar: Any {
-        get {
-            try! mocked() as Any
-        }
-        set {
-            try! mocked()
-        }
-    }
+    var foo: Any { get { try! mocked() as Any } }
+    var bar: Any { get { try! mocked() as Any } set { try! mocked() } }
     let mock = Mock<CalleeKeys>()
-    
-    func someFunction() -> Int {
-        return try! mocked()
-    }
-    
-    func someFunction(_ arg: Int) -> Int {
-        return try! mocked(arguments: arg)
-    }
-    
-    func someOtherFunction() {
-        try! mocked()
-    }
-    
-    func someThrowingFunction() throws {
-        try mocked()
-    }
-    
+    func someFunction() -> Int { return try! mocked() }
+    func someFunction(_ arg: Int) -> Int { return try! mocked(arguments: arg) }
+    func someOtherFunction() { try! mocked() }
+    func someThrowingFunction() throws { try mocked() }
 }
 
 extension ProtocolMocked {
-    
     func defaultStub() -> Stub? {
         return { call in
             switch call.callee {
@@ -144,7 +115,6 @@ extension ProtocolMocked {
             }
         }
     }
-    
 }
 
 struct AnError: Error {}
