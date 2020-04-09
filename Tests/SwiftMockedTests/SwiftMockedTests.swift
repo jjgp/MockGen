@@ -37,34 +37,26 @@ final class SwiftMockedTests: XCTestCase {
         _ = protocolMocked.someFunction()
         protocolMocked.someOtherFunction()
         
-        let calls = protocolMocked.calls()
-        calls.total() == 5
-        calls.total() >= 5
-        calls.total() <= 5
-        calls.total() < 6
-        calls.total() > 4
+        let calls = protocolMocked.calls
+        XCTAssertEqual(calls, 5)
         
-        let callees = Verify.callees(in: calls)
-        callees.inspect() == .someOtherFunction
-        callees.inspect(1) == .someFunction
-        callees.inspect(2) == .someFunctionWithArg
-        callees.inspect(3) == .someFunctionWithArg
-        callees.inspect(4) == .someFunction
-        callees.last(3) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        callees.first(3) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        let callees = Inspect.callees(in: calls)
+        XCTAssertEqual(callees.inspect(), .someOtherFunction)
+        XCTAssertEqual(callees.inspect(1), .someFunction)
+        XCTAssertEqual(callees.inspect(2), .someFunctionWithArg)
+        XCTAssertEqual(callees.inspect(3), .someFunctionWithArg)
+        XCTAssertEqual(callees.inspect(4), .someFunction)
+        XCTAssertEqual(callees.last(3), [.someOtherFunction, .someFunction, .someFunctionWithArg])
+        XCTAssertEqual(callees.first(3), [.someFunction, .someFunctionWithArg, .someFunctionWithArg])
         
-        var invocations = Verify.invocations(to: .someFunction, in: calls)
-        invocations.total() == 2
-        invocations.total() >= 2
-        invocations.total() <= 2
-        invocations.total() < 3
-        invocations.total() > 1
+        var invocations = Inspect.invocations(to: .someFunction, in: calls)
+        XCTAssertEqual(invocations.total, 2)
         
-        invocations = Verify.invocations(to: .someFunctionWithArg, in: calls)
-        invocations.inspect().argument() == 42
-        invocations.inspect(1).argument() == 41
+        invocations = Inspect.invocations(to: .someFunctionWithArg, in: calls)
+        XCTAssertEqual(invocations.inspect().argument(), 42)
+        XCTAssertEqual(invocations.inspect(1).argument(), 41)
         
-        protocolMocked.calls(missing: .someThrowingFunction)
+        XCTAssertTrue(protocolMocked.calls(missing: .someThrowingFunction))
     }
     
 }
