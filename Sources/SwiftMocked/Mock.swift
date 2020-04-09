@@ -22,7 +22,7 @@ public struct Arguments {
 
 public extension Arguments {
 
-    func argument(_ position: Int) -> Any? {
+    func argument(_ position: Int = 0) -> Any? {
         guard position < arguments.count else {
             return nil
         }
@@ -30,7 +30,7 @@ public extension Arguments {
         return arguments[position]
     }
     
-    func argument<T>(_ position: Int) -> T? {
+    func argument<T>(_ position: Int = 0) -> T? {
         return argument(position) as? T
     }
     

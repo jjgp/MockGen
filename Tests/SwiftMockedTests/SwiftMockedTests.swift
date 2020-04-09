@@ -1,3 +1,4 @@
+import Nimble
 import XCTest
 @testable import SwiftMocked
 
@@ -38,25 +39,27 @@ final class SwiftMockedTests: XCTestCase {
         protocolMocked.someOtherFunction()
         
         let calls = protocolMocked.calls
-        XCTAssertEqual(calls, 5)
-        
-        let callees = Inspect.callees(in: calls)
-        XCTAssertEqual(callees.inspect(), .someOtherFunction)
-        XCTAssertEqual(callees.inspect(1), .someFunction)
-        XCTAssertEqual(callees.inspect(2), .someFunctionWithArg)
-        XCTAssertEqual(callees.inspect(3), .someFunctionWithArg)
-        XCTAssertEqual(callees.inspect(4), .someFunction)
-        XCTAssertEqual(callees.last(3), [.someOtherFunction, .someFunction, .someFunctionWithArg])
-        XCTAssertEqual(callees.first(3), [.someFunction, .someFunctionWithArg, .someFunctionWithArg])
-        
-        var invocations = Inspect.invocations(to: .someFunction, in: calls)
-        XCTAssertEqual(invocations.total, 2)
-        
-        invocations = Inspect.invocations(to: .someFunctionWithArg, in: calls)
-        XCTAssertEqual(invocations.inspect().argument(), 42)
-        XCTAssertEqual(invocations.inspect(1).argument(), 41)
+        XCTAssertEqual(calls.count, 5)
+        expect(calls.inspect()?.callee) == .someOtherFunction
+        expect(calls.inspect(2)?.arguments.argument()) == 42
         
         XCTAssertTrue(protocolMocked.calls(missing: .someThrowingFunction))
+        
+        var invocations = protocolMocked.calls(to: .someFunction)
+        XCTAssertEqual(invocations.count, 2)
+        
+        invocations = protocolMocked.calls(to: .someFunctionWithArg)
+        expect(invocations.inspect()?.argument()) == 42
+        expect(invocations.inspect(1)?.argument()) == 41
+        
+        let callees = protocolMocked.callees
+        XCTAssertEqual(callees.inspect(), .someOtherFunction)
+        expect(callees.inspect(1)) == .someFunction
+        XCTAssertTrue(callees.inspect(2) == .someFunctionWithArg)
+        expect(callees.inspect(3)) == .someFunctionWithArg
+        expect(callees.inspect(4)) == .someFunction
+        expect(callees.last(3)) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
+        expect(callees.first(3)) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
     }
     
 }
