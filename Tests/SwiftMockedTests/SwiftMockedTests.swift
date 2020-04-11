@@ -17,62 +17,75 @@ final class SwiftMockedTests: XCTestCase {
         protocolMocked.stub(.foo, returning: 42000)
         XCTAssertEqual(protocolMocked.foo as? Int, 42000)
         
-        protocolMocked.stub(.someFunctionWithArg) {
-            ($0.arguments.argument(0) ?? 0) * 100
-        }
+        protocolMocked.stub(.someFunctionWithFoo) { ($0[argument: 0] ?? 0) * 100 }
         XCTAssertEqual(protocolMocked.someFunction(420), 42000)
         
         var call: ProtocolMocked.Call?
-        protocolMocked.stub(.someOtherFunction) {
-            call = $0
-        }
+        protocolMocked.stub(.someOtherFunction) { call = $0 }
         protocolMocked.someOtherFunction()
         XCTAssertNotNil(call)
     }
     
     func testVerifyProtocolMocked() {
-        let protocolMocked = ProtocolMocked()
-        _ = protocolMocked.someFunction()
-        _ = protocolMocked.someFunction(41)
-        _ = protocolMocked.someFunction(42)
-        _ = protocolMocked.someFunction()
-        protocolMocked.someOtherFunction()
+        let mocked = ProtocolMocked()
+        _ = mocked.someFunction()
+        _ = mocked.someFunction(41)
+        _ = mocked.someFunction(42)
+        _ = mocked.someFunction(bar: 43)
+        _ = mocked.someFunction()
+        _ = mocked.someFunction(42, bar: 43)
+        mocked.someOtherFunction()
         
-        let calls = protocolMocked.calls
-        XCTAssertEqual(calls.count, 5)
-        expect(calls.inspect()?.callee) == .someOtherFunction
-        expect(calls.inspect(2)?.arguments.argument()) == 42
+        XCTAssertEqual(mocked.calls.count, 7)
+        expect(mocked.calls.last?.key) == .someOtherFunction
+        expect(mocked.calls[afterFirst: 2]?[argument: 0]) == 42
         
-        XCTAssertTrue(protocolMocked.calls(missing: .someThrowingFunction))
-        
-        var invocations = protocolMocked.calls(to: .someFunction)
-        XCTAssertEqual(invocations.count, 2)
-        
-        invocations = protocolMocked.calls(to: .someFunctionWithArg)
-        expect(invocations.inspect()?.argument()) == 42
-        expect(invocations.inspect(1)?.argument()) == 41
-        
-        let callees = protocolMocked.callees
-        XCTAssertEqual(callees.inspect(), .someOtherFunction)
-        expect(callees.inspect(1)) == .someFunction
-        XCTAssertTrue(callees.inspect(2) == .someFunctionWithArg)
-        expect(callees.inspect(3)) == .someFunctionWithArg
-        expect(callees.inspect(4)) == .someFunction
-        expect(callees.last(3)) == [.someOtherFunction, .someFunction, .someFunctionWithArg]
-        expect(callees.first(3)) == [.someFunction, .someFunctionWithArg, .someFunctionWithArg]
+        XCTAssertEqual(mocked.calls[to: .someFunction].count, 2)
+
+        let calls = mocked.calls[to: .someFunctionWithFoo]
+        expect(calls.count) == 2
+        expect(calls.first?[argument: 0]) == 41
+        expect(calls[afterFirst: 0]?[argument: 0]) == 41
+        expect(calls[beforeLast: 1]?[argument: 0]) == 41
+        expect(calls.last?[argument: 0]) == 42
+        expect(calls[afterFirst: 1]?[argument: 0]) == 42
+        expect(calls[beforeLast: 0]?[argument: 0]) == 42
+
+        expect(mocked.calls[head: 3].keys.contains(.someFunction)).to(beTrue())
+        expect(mocked.calls[head: 3].keys) == [.someFunction, .someFunctionWithFoo, .someFunctionWithFoo]
+        expect(mocked.calls[head: 5].keys) == [
+            .someFunction, .someFunctionWithFoo, .someFunctionWithFoo, .someFunctionWithBar, .someFunction
+        ]
+        expect(mocked.calls[head: 6].keys) == [
+            .someFunction, .someFunctionWithFoo, .someFunctionWithFoo, .someFunctionWithBar, .someFunction,
+            .someFunctionWithFooAndBar
+        ]
+        expect(mocked.calls[tail: 3].keys) == [.someFunction, .someFunctionWithFooAndBar, .someOtherFunction]
+        expect(mocked.calls[tail: 5].keys) == [
+            .someFunctionWithFoo, .someFunctionWithBar, .someFunction, .someFunctionWithFooAndBar, .someOtherFunction
+        ]
+        expect(mocked.calls[tail: 6].keys) == [
+            .someFunctionWithFoo, .someFunctionWithFoo, .someFunctionWithBar, .someFunction, .someFunctionWithFooAndBar,
+            .someOtherFunction
+        ]
+        expect(mocked.calls.keys) == [
+            .someFunction, .someFunctionWithFoo, .someFunctionWithFoo, .someFunctionWithBar, .someFunction,
+            .someFunctionWithFooAndBar, .someOtherFunction
+        ]
     }
     
 }
 
 protocol Protocol {
-    
     var foo: Any { get }
     var bar: Any { get set }
     
     func someFunction() -> Int
-    func someFunction(_ arg: Int) -> Int
+    func someFunction(_ foo: Int) -> Int
+    func someFunction(bar: UInt) -> Int
+    func someFunction(_ foo: Int, bar: UInt) -> Int
+    func someOtherFunction()
     func someThrowingFunction() throws
-    
 }
 
 struct ProtocolMocked: Protocol, Mocked {
@@ -80,7 +93,9 @@ struct ProtocolMocked: Protocol, Mocked {
         case foo = "foo"
         case bar = "bar"
         case someFunction = "someFunction()"
-        case someFunctionWithArg = "someFunction(_:)"
+        case someFunctionWithFoo = "someFunction(_:)"
+        case someFunctionWithBar = "someFunction(bar:)"
+        case someFunctionWithFooAndBar = "someFunction(_:bar:)"
         case someOtherFunction = "someOtherFunction()"
         case someThrowingFunction = "someThrowingFunction()"
     }
@@ -88,7 +103,9 @@ struct ProtocolMocked: Protocol, Mocked {
     var bar: Any { get { try! mocked() as Any } set { try! mocked() } }
     let mock = Mock<CalleeKeys>()
     func someFunction() -> Int { return try! mocked() }
-    func someFunction(_ arg: Int) -> Int { return try! mocked(arguments: arg) }
+    func someFunction(_ foo: Int) -> Int { return try! mocked(arguments: foo) }
+    func someFunction(bar: UInt) -> Int { return try! mocked(arguments: bar) }
+    func someFunction(_ foo: Int, bar: UInt) -> Int { return try! mocked(arguments: foo, bar) }
     func someOtherFunction() { try! mocked() }
     func someThrowingFunction() throws { try mocked() }
 }
@@ -96,15 +113,19 @@ struct ProtocolMocked: Protocol, Mocked {
 extension ProtocolMocked {
     func defaultStub() -> Stub? {
         return { call in
-            switch call.callee {
+            switch call.key {
             case .foo:
                 return 4.2
             case .bar:
                 return 4200
             case .someFunction:
                 return 42
-            case .someFunctionWithArg:
+            case .someFunctionWithFoo:
                 return 420
+            case .someFunctionWithBar:
+                return 43
+            case .someFunctionWithFooAndBar:
+                return 43
             default:
                 return nil
             }

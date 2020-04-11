@@ -1,3 +1,14 @@
+public class Mock<C: CalleeKey> {
+    
+    var calls = Calls<C>()
+    var stubs = [String: Stub]()
+    
+    public init() {}
+    
+    public typealias Stub = (Call<C>) throws -> Any?
+    
+}
+
 public protocol Mocked {
     
     associatedtype CalleeKeys: CalleeKey
@@ -5,18 +16,19 @@ public protocol Mocked {
     var mock: Mock<CalleeKeys> { get }
     
     func defaultStub() -> Stub?
-    func mocked(callee stringValue: String, arguments: Any?...) throws -> Any!
-    func mocked<T>(callee stringValue: String, arguments: Any?...) throws -> T!
-    func stub(_ callee: CalleeKeys, doing: @escaping Mock<CalleeKeys>.Stub)
-    func stub(_ callee: CalleeKeys, doing: @escaping VoidStub)
-    func stub(_ callee: CalleeKeys, returning value: Any?)
-    func stub(_ callee: CalleeKeys, throwing value: Error)
+    func mocked(key stringValue: String, arguments: Any?...) throws -> Any!
+    func mocked<T>(key stringValue: String, arguments: Any?...) throws -> T!
+    func stub(_ key: CalleeKeys, doing: @escaping Stub)
+    func stub(_ key: CalleeKeys, doing: @escaping VoidStub)
+    func stub(_ key: CalleeKeys, returning value: Any?)
+    func stub(_ key: CalleeKeys, throwing value: Error)
     
 }
 
 public extension Mocked {
     
-    typealias Call = Mock<CalleeKeys>.Call
+    typealias Call = SwiftMocked.Call<CalleeKeys>
+    typealias Calls = SwiftMocked.Calls<CalleeKeys>
     typealias Stub = Mock<CalleeKeys>.Stub
     typealias VoidStub = (Call) throws -> Void
     
@@ -25,12 +37,12 @@ public extension Mocked {
 public extension Mocked {
     
     @discardableResult
-    func mocked(callee stringValue: String = #function, arguments: Any?...) throws -> Any! {
+    func mocked(key stringValue: String = #function, arguments: Any?...) throws -> Any! {
         let call = recorded(stringValue, arguments)
         return try mock.stubs[stringValue]?(call) ?? defaultStub()?(call)
     }
     
-    func mocked<T>(callee stringValue: String = #function, arguments: Any?...) throws -> T! {
+    func mocked<T>(key stringValue: String = #function, arguments: Any?...) throws -> T! {
         let call = recorded(stringValue, arguments)
         return (try mock.stubs[stringValue]?(call) ?? defaultStub()?(call)) as? T
     }
@@ -40,9 +52,9 @@ public extension Mocked {
 extension Mocked {
     
     func recorded(_ stringValue: String = #function, _ arguments: [Any?]) -> Call {
-        let callee = CalleeKeys(stringValue: stringValue)!
-        let call = Call(callee: callee, arguments: .init(arguments))
-        mock.calls.insert(call, at: 0)
+        let key = CalleeKeys(stringValue: stringValue)!
+        let call = Call(key, arguments)
+        mock.calls.append(call)
         return call
     }
     
@@ -50,25 +62,33 @@ extension Mocked {
 
 public extension Mocked {
     
-    func stub(_ callee: CalleeKeys, doing: @escaping Stub) {
-        mock.stubs[callee.stringValue] = doing
+    func stub(_ key: CalleeKeys, doing: @escaping Stub) {
+        mock.stubs[key.stringValue] = doing
     }
     
-    func stub(_ callee: CalleeKeys, doing: @escaping VoidStub) {
-        mock.stubs[callee.stringValue] = doing
+    func stub(_ key: CalleeKeys, doing: @escaping VoidStub) {
+        mock.stubs[key.stringValue] = doing
     }
     
-    func stub(_ callee: CalleeKeys, returning value: Any?) {
-        stub(callee) { _ in value }
+    func stub(_ key: CalleeKeys, returning value: Any?) {
+        stub(key) { _ in value }
     }
     
-    func stub(_ callee: CalleeKeys, throwing value: Error) {
+    func stub(_ key: CalleeKeys, throwing value: Error) {
         let stub: Stub = { _ in throw value }
-        self.stub(callee, doing: stub)
+        self.stub(key, doing: stub)
     }
     
     func removeStubs() {
         mock.stubs.removeAll()
+    }
+    
+}
+
+public extension Mocked {
+    
+    var calls: Calls {
+        return mock.calls
     }
     
 }
