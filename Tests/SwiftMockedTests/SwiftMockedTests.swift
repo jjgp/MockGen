@@ -5,7 +5,7 @@ import XCTest
 final class SwiftMockedTests: XCTestCase {
     
     func testProtocolMockedReturnValue() {
-        let protocolMocked = ProtocolMocked()
+        let protocolMocked = ProtocolMocked.withDefaultStub()
         XCTAssertEqual(protocolMocked.foo as? Double, 4.2)
         XCTAssertEqual(protocolMocked.bar as? Int, 4200)
         XCTAssertEqual(protocolMocked.someFunction(), 42)
@@ -27,7 +27,7 @@ final class SwiftMockedTests: XCTestCase {
     }
     
     func testVerifyProtocolMocked() {
-        let mocked = ProtocolMocked()
+        let mocked = ProtocolMocked.withDefaultStub()
         _ = mocked.someFunction()
         _ = mocked.someFunction(41)
         _ = mocked.someFunction(42)
@@ -41,7 +41,7 @@ final class SwiftMockedTests: XCTestCase {
         expect(mocked.calls[afterFirst: 2]?[argument: 0]) == 42
         
         XCTAssertEqual(mocked.calls[to: .someFunction].count, 2)
-
+        
         let calls = mocked.calls[to: .someFunctionWithFoo]
         expect(calls.count) == 2
         expect(calls.first?[argument: 0]) == 41
@@ -50,7 +50,7 @@ final class SwiftMockedTests: XCTestCase {
         expect(calls.last?[argument: 0]) == 42
         expect(calls[afterFirst: 1]?[argument: 0]) == 42
         expect(calls[beforeLast: 0]?[argument: 0]) == 42
-
+        
         expect(mocked.calls[head: 3].keys.contains(.someFunction)).to(beTrue())
         expect(mocked.calls[head: 3].keys) == [.someFunction, .someFunctionWithFoo, .someFunctionWithFoo]
         expect(mocked.calls[head: 5].keys) == [
@@ -99,6 +99,7 @@ struct ProtocolMocked: Protocol, Mocked {
         case someOtherFunction = "someOtherFunction()"
         case someThrowingFunction = "someThrowingFunction()"
     }
+    var defaultStub: Stub?
     var foo: Any { get { try! mocked() as Any } }
     var bar: Any { get { try! mocked() as Any } set { try! mocked() } }
     let mock = Mock<CalleeKeys>()
@@ -111,8 +112,9 @@ struct ProtocolMocked: Protocol, Mocked {
 }
 
 extension ProtocolMocked {
-    func defaultStub() -> Stub? {
-        return { call in
+    static func withDefaultStub() -> Self {
+        var mocked = ProtocolMocked()
+        mocked.defaultStub = { call in
             switch call.key {
             case .foo:
                 return 4.2
@@ -130,6 +132,7 @@ extension ProtocolMocked {
                 return nil
             }
         }
+        return mocked
     }
 }
 

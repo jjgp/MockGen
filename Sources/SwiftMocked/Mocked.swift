@@ -13,9 +13,9 @@ public protocol Mocked {
     
     associatedtype CalleeKeys: CalleeKey
     
+    var defaultStub: Stub? { get set }
     var mock: Mock<CalleeKeys> { get }
     
-    func defaultStub() -> Stub?
     func mocked(key stringValue: String, arguments: Any?...) throws -> Any!
     func mocked<T>(key stringValue: String, arguments: Any?...) throws -> T!
     func stub(_ key: CalleeKeys, doing: @escaping Stub)
@@ -39,12 +39,12 @@ public extension Mocked {
     @discardableResult
     func mocked(key stringValue: String = #function, arguments: Any?...) throws -> Any! {
         let call = recorded(stringValue, arguments)
-        return try mock.stubs[stringValue]?(call) ?? defaultStub()?(call)
+        return try mock.stubs[stringValue]?(call) ?? defaultStub?(call)
     }
     
     func mocked<T>(key stringValue: String = #function, arguments: Any?...) throws -> T! {
         let call = recorded(stringValue, arguments)
-        return (try mock.stubs[stringValue]?(call) ?? defaultStub()?(call)) as? T
+        return (try mock.stubs[stringValue]?(call) ?? defaultStub?(call)) as? T
     }
     
 }
